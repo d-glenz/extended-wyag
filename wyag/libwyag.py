@@ -7,7 +7,7 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import cmd_init
+from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -22,16 +22,49 @@ initp.add_argument(
     help="Where to create the repository.",
 )
 
+catfilep = argsubparsers.add_parser("cat-file", help="Provide content of repository objects")
+catfilep.add_argument(
+    "type",
+    metavar="type",
+    choices=["blob", "commit", "tag", "tree"],
+    help="Specify the type",
+)
+catfilep.add_argument(
+    "object",
+    metavar="object",
+    help="The object to display",
+)
+
+hashobjectp = argsubparsers.add_parser("hash-object",
+                                       help="Compute object ID and optionally creates a blob from a file")
+hashobjectp.add_argument(
+    "-t",
+    metavar="type",
+    choices=["blob", "commit", "tag", "tree"],
+    default="blob",
+    help="Specify the type",
+)
+hashobjectp.add_argument(
+    "-w",
+    dest="write",
+    action="store_true",
+    help="Actually write the object into the database"
+)
+hashobjectp.add_argument(
+    "path",
+    help="Read object from <file>",
+)
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
 
     command_dict = {
         # "add": cmd_add,
-        # "cat-file": cmd_cat_file,
+        "cat-file": cmd_cat_file,
         # "checkout": cmd_checkout,
         # "commit": cmd_commit,
-        # "hash-object": cmd_hash_object,
+        "hash-object": cmd_hash_object,
         "init": cmd_init,
         # "log": cmd_log,
         # "ls-tree": cmd_ls_tree,
