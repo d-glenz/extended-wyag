@@ -145,7 +145,8 @@ def repo_find(path: str = '.', required: bool = True) -> Optional[GitRepository]
         # Path('/') / '..' == Path('/')
         # if parent == path, then path is root
         if required:
-            raise ValueError("No git directory.")
+            # (or any parent up to mount point {})")
+            raise ValueError(f"Not a git repository (or any parent up to mount point {parent}).")
 
         return None
 
