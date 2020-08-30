@@ -5,6 +5,7 @@ from wyag.repository import GitRepository, repo_create, repo_find
 from wyag.objects import cat_file, object_hash, object_find, object_read
 from wyag.kvlm import log_graphviz, GitCommit
 from wyag.trees import GitTree, tree_checkout
+from wyag.refs import ref_list, show_ref, tag_create
 
 
 def cmd_init(args: argparse.Namespace) -> None:
@@ -77,3 +78,24 @@ def cmd_checkout(args: argparse.Namespace) -> None:
         path.mkdir(parents=True)
 
     tree_checkout(repo, obj, path.resolve())
+
+
+def cmd_show_ref(args: argparse.Namespace) -> None:
+    repo = repo_find()
+    assert repo is not None
+    refs = ref_list(repo)
+    show_ref(repo, refs, prefix="refs")
+
+
+def cmd_tag(args: argparse.Namespace) -> None:
+    repo = repo_find()
+    assert repo is not None
+
+    if args.name:
+        tag_create(repo,
+                   args.name,
+                   args.object,
+                   args.create_tag_object)
+    else:
+        refs = ref_list(repo)
+        show_ref(repo, refs["tags"], with_hash=False)

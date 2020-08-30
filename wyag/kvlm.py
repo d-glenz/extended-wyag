@@ -81,9 +81,9 @@ def kvlm_serialize(kvlm: Dict[bytes, List[bytes]]) -> bytes:
 
 
 class GitCommit(GitObject):
-    def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
+    def __init__(self, repo: Optional[GitRepository], data: Any = None, obj_type: bytes = b'commit') -> None:
         self.kvlm: Dict[bytes, List[bytes]] = {}
-        super(GitCommit, self).__init__(repo, b'commit', data)
+        super(GitCommit, self).__init__(repo, obj_type, data)
 
     def deserialize(self, data):
         self.kvlm = kvlm_parse(data)
@@ -110,3 +110,15 @@ def log_graphviz(repo: GitRepository, sha: str, seen: Set[str]) -> None:
     for p in parents:
         print("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
         log_graphviz(repo, p.decode("ascii"), seen)
+
+
+class GitTag(GitCommit):
+    """Tag object.
+
+       There are two types of tags, lightweight tags are just regular refs to a commit,
+       a tree or a blob. Tag objects are regular refs pointing to an object of type tag.
+       Unlike lightweight tags, tag objects have an author, a date, an optional PGP
+       signature and an optional annotation."""
+
+    def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
+        super(GitTag, self).__init__(repo, data, obj_type=b'tag')
