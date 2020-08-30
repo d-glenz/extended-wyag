@@ -3,9 +3,9 @@ import pathlib
 
 from wyag.repository import GitRepository, repo_create, repo_find
 from wyag.objects import cat_file, object_hash, object_find, object_read
-from wyag.kvlm import log_graphviz, GitCommit
+from wyag.kvlm import log_graphviz, GitCommit, tag_create
 from wyag.trees import GitTree, tree_checkout
-from wyag.refs import ref_list, show_ref, tag_create
+from wyag.refs import ref_list, show_ref
 
 
 def cmd_init(args: argparse.Namespace) -> None:

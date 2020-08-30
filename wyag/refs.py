@@ -1,10 +1,9 @@
 import collections
 import pathlib
-from typing import Dict, Any
+import re
+from typing import Dict, Any, List
 
 from wyag.repository import repo_file, repo_dir, GitRepository
-from wyag.objects import object_find, object_write
-from wyag.kvlm import GitTag
 
 
 def ref_resolve(repo: GitRepository, ref: str) -> str:
@@ -49,27 +48,42 @@ def show_ref(repo: GitRepository, refs: Dict[str, str], with_hash: bool = True, 
                      prefix=f"{prefix}{'/' if prefix else ''}{k}")
 
 
-def tag_create(repo: GitRepository, name: str, reference: str, create_tag_object: bool) -> None:
-    # Get the GitObject from the object reference
-    sha = object_find(repo, reference)
+def object_resolve(repo: GitRepository, name: str) -> List[str]:
+    """Resolve name to an object hash in repo.
 
-    if create_tag_object:
-        # create tag object (commit)
-        tag = GitTag(repo)
-        tag.kvlm = collections.OrderedDict()
-        tag.kvlm[b'object'] = [sha.encode()]
-        tag.kvlm[b'type'] = [b'commit']
-        tag.kvlm[b'tag'] = [name.encode()]
-        tag.kvlm[b'tagger'] = [b'The tagger']
-        tag.kvlm[b''] = [b'This is the commit message that should have come from the user\n']
-        tag_sha = object_write(tag)
-        # create reference
-        ref_create(repo, "tags/" + name, tag_sha)
-    else:
-        # create lightweight tag (ref)
-        ref_create(repo, "tags/" + name, sha)
+       This function is aware of:
+        - the HEAD literal
+        - short and long hashes
+        - tags
+        - branches
+        - remote branches"""
 
+    candidates = []
+    hashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")
+    smallHashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")  # noqa: F841
 
-def ref_create(repo: GitRepository, ref_name: str, sha: str) -> None:
-    with open(str(repo_file(repo, "refs/" + ref_name)), "w") as fp:
-        fp.write(sha + '\n')
+    # Empty string? Abort.
+    if not name.strip():
+        return []
+
+    if name == "HEAD":
+        return [ref_resolve(repo, "HEAD")]
+
+    if hashRE.match(name):
+        if len(name) == 40:
+            # This is a complete hash
+            return [name.lower()]
+        if len(name) >= 4:
+            # This is a small hash. 4 seems to be the minimal length for git to
+            # consider something a short hash. This limit is documented in man
+            # git-rev-parse
+            name = name.lower()
+            prefix = name[:2]
+            path = repo_dir(repo, "objects", prefix, mkdir=False)
+            if path:
+                rem = name[2:]
+                for f in path.iterdir():
+                    if str(f).startswith(rem):
+                        candidates.append(prefix + str(f))
+
+    return candidates

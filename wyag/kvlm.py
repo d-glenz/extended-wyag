@@ -3,8 +3,8 @@
 import collections
 from typing import Dict, List, Optional, Any, Set
 
-from wyag.objects import GitObject, object_read
-from wyag.repository import GitRepository
+from wyag.objects import GitObject, object_read, object_find, object_write
+from wyag.repository import GitRepository, repo_file
 
 
 def kvlm_parse(raw: bytearray, start: int = 0, dct: Dict[bytes, List[bytes]] = None) -> Dict[bytes, List[bytes]]:
@@ -122,3 +122,29 @@ class GitTag(GitCommit):
 
     def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
         super(GitTag, self).__init__(repo, data, obj_type=b'tag')
+
+
+def tag_create(repo: GitRepository, name: str, reference: str, create_tag_object: bool) -> None:
+    # Get the GitObject from the object reference
+    sha = object_find(repo, reference)
+
+    if create_tag_object:
+        # create tag object (commit)
+        tag = GitTag(repo)
+        tag.kvlm = collections.OrderedDict()
+        tag.kvlm[b'object'] = [sha.encode()]
+        tag.kvlm[b'type'] = [b'commit']
+        tag.kvlm[b'tag'] = [name.encode()]
+        tag.kvlm[b'tagger'] = [b'The tagger']
+        tag.kvlm[b''] = [b'This is the commit message that should have come from the user\n']
+        tag_sha = object_write(tag)
+        # create reference
+        ref_create(repo, "tags/" + name, tag_sha)
+    else:
+        # create lightweight tag (ref)
+        ref_create(repo, "tags/" + name, sha)
+
+
+def ref_create(repo: GitRepository, ref_name: str, sha: str) -> None:
+    with open(str(repo_file(repo, "refs/" + ref_name)), "w") as fp:
+        fp.write(sha + '\n')
