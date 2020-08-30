@@ -310,7 +310,7 @@ def object_resolve(repo: GitRepository, name: str) -> List[str]:
 
     candidates = []
     hashRE = re.compile(r"^[0-9A-Fa-f]{40}$")
-    smallHashRE = re.compile(r"^[0-9A-Fa-f]{4,16}$")
+    smallHashRE = re.compile(r"^[0-9A-Fa-f]{4,40}$")
 
     # Empty string? Abort.
     if not name.strip():
