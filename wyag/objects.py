@@ -1,10 +1,12 @@
 import collections
 import hashlib
+import pathlib
+import re
 import sys
 from typing import Any, Optional, BinaryIO, Dict, List, Set
 import zlib
 
-from wyag.repository import GitRepository, repo_file
+from wyag.repository import GitRepository, repo_file, repo_dir
 
 
 class GitObject:
@@ -72,11 +74,6 @@ def object_read(repo: GitRepository, sha: str) -> GitObject:
         return c(repo, raw[y+1:])
 
 
-def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> str:
-    """Will resolve objects by full hash, short hash, tags, ..."""
-    return name
-
-
 def object_write(obj: GitObject, actually_write: bool = True) -> str:
     # Serialize object data
     data = obj.serialize()
@@ -102,8 +99,9 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
 
 # TODO: function name inconsistent
 def cat_file(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
-    obj = object_read(repo, object_find(repo, obj, fmt=fmt))
-    sys.stdout.buffer.write(obj.serialize())
+    obj = object_find(repo, obj, fmt=fmt)
+    obj_content = object_read(repo, obj)
+    sys.stdout.buffer.write(obj_content.serialize())
 
 
 def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) -> str:
@@ -245,6 +243,7 @@ class GitTag(GitCommit):
 def tag_create(repo: GitRepository, name: str, reference: str, create_tag_object: bool) -> None:
     # Get the GitObject from the object reference
     sha = object_find(repo, reference)
+    assert sha is not None
 
     if create_tag_object:
         # create tag object (commit)
@@ -266,3 +265,111 @@ def tag_create(repo: GitRepository, name: str, reference: str, create_tag_object
 def ref_create(repo: GitRepository, ref_name: str, sha: str) -> None:
     with open(str(repo_file(repo, "refs/" + ref_name)), "w") as fp:
         fp.write(sha + '\n')
+
+
+def ref_resolve(repo: GitRepository, ref: str) -> str:
+    with open(str(repo_file(repo, ref)), 'r') as fp:
+        data = fp.read()[:-1]  # .trim()
+
+    if data.startswith("ref: "):
+        return ref_resolve(repo, data[5:])
+
+    return data
+
+
+def ref_list(repo: GitRepository, path: str = None) -> Dict[str, Any]:
+    if not path:
+        rpath = repo_dir(repo, "refs")
+    else:
+        rpath = pathlib.Path(path)
+
+    assert rpath is not None
+
+    ret = collections.OrderedDict()
+    # Git shows refs sorted. To do the same, we use and OrderedDict
+    # and sort the output of listdir
+    for f in sorted(rpath.iterdir()):
+        can = rpath / f
+        if can.is_dir():
+            ret[str(f)] = ref_list(repo, str(can))
+        else:
+            ret[str(f)] = ref_resolve(repo, str(can))  # type: ignore
+
+    return ret
+
+
+def object_resolve(repo: GitRepository, name: str) -> List[str]:
+    """Resolve name to an object hash in repo.
+
+       This function is aware of:
+        - the HEAD literal
+        - short and long hashes
+        - tags
+        - branches
+        - remote branches"""
+
+    candidates = []
+    hashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")
+    smallHashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")  # noqa: F841
+
+    # Empty string? Abort.
+    if not name.strip():
+        return []
+
+    if name == "HEAD":
+        return [ref_resolve(repo, "HEAD")]
+
+    if hashRE.match(name):
+        if len(name) == 40:
+            # This is a complete hash
+            return [name.lower()]
+        if len(name) >= 4:
+            # This is a small hash. 4 seems to be the minimal length for git to
+            # consider something a short hash. This limit is documented in man
+            # git-rev-parse
+            name = name.lower()
+            prefix = name[:2]
+            path = repo_dir(repo, "objects", prefix, mkdir=False)
+            if path:
+                rem = name[2:]
+                for f in path.iterdir():
+                    if str(f).startswith(rem):
+                        candidates.append(prefix + str(f))
+
+    return candidates
+
+
+def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> Optional[str]:
+    """Will resolve objects by full hash, short hash, tags, ..."""
+    all_shas = object_resolve(repo, name)
+
+    if not all_shas:
+        raise ValueError(f"No such reference: {name}")
+
+    if len(all_shas) > 1:
+        candidate_str = '\n'.join(all_shas)
+        raise ValueError(f"Ambiguous reference {name}: Candidates are:\n - {candidate_str}")
+
+    sha = all_shas[0]
+
+    if not fmt:
+        return sha
+
+    while True:
+        obj = object_read(repo, sha)
+
+        if obj.fmt == fmt:
+            return sha
+
+        if not follow:
+            return None
+
+        assert isinstance(obj, GitCommit)
+
+        # Follow tags
+        if obj.fmt == b'tag':
+            sha = obj.kvlm[b'object'][0].decode("ascii")
+        elif obj.fmt == f'commit' and fmt == b'tree':
+            sha = obj.kvlm[b'tree'][0].decode('ascii')
+        else:
+            return None
