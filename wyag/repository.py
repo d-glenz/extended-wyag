@@ -18,7 +18,6 @@ class GitRepository:
 
         self.conf = configparser.ConfigParser()
         cf = repo_file(self, "config")
-        print(f"cf={cf}")
 
         if cf and cf.exists():
             self.conf.read([str(cf)])
