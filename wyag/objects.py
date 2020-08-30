@@ -7,9 +7,9 @@ from wyag.repository import GitRepository, repo_file
 
 
 class GitObject:
-    def __init__(self, repo: GitRepository, data: Any = None) -> None:
+    def __init__(self, repo: GitRepository, fmt: bytes = b'', data: Any = None) -> None:
         self.repo = repo
-        self.fmt: bytes = b""
+        self.fmt: bytes = fmt
         if data is not None:
             self.deserialize(data)
 
@@ -26,9 +26,7 @@ class GitObject:
 
 class GitBlob(GitObject):
     def __init__(self, repo: GitRepository, data: Any = None) -> None:
-        self.fmt = b'blob'
-        self.blobdata = None
-        super(GitBlob, self).__init__(repo, data)
+        super(GitBlob, self).__init__(repo, b'blob', data)
 
     def serialize(self) -> Any:
         return self.blobdata
@@ -108,8 +106,6 @@ def cat_file(repo: GitRepository, obj: Any, fmt: Optional[str] = None) -> None:
 def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) -> str:
     data = fd.read()
 
-    if repo is None:
-        raise ValueError("repo is None")
     # Choose constructor depending on
     # object type found in header
     # if fmt == b'commit':
@@ -123,4 +119,4 @@ def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) 
     else:
         raise ValueError(f"Unknown type {fmt!s}!")
 
-    return object_write(obj, True)
+    return object_write(obj, repo is not None)

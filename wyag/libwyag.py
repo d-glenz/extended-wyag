@@ -40,6 +40,7 @@ hashobjectp = argsubparsers.add_parser("hash-object",
 hashobjectp.add_argument(
     "-t",
     metavar="type",
+    dest="type",
     choices=["blob", "commit", "tag", "tree"],
     default="blob",
     help="Specify the type",
