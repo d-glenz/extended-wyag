@@ -309,8 +309,8 @@ def object_resolve(repo: GitRepository, name: str) -> List[str]:
         - remote branches"""
 
     candidates = []
-    hashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")
-    smallHashRE = re.compile(r"^[0-9A-Fa-f]{1,16}$")  # noqa: F841
+    hashRE = re.compile(r"^[0-9A-Fa-f]{40}$")
+    smallHashRE = re.compile(r"^[0-9A-Fa-f]{4,16}$")
 
     # Empty string? Abort.
     if not name.strip():
@@ -320,21 +320,20 @@ def object_resolve(repo: GitRepository, name: str) -> List[str]:
         return [ref_resolve(repo, "HEAD")]
 
     if hashRE.match(name):
-        if len(name) == 40:
-            # This is a complete hash
-            return [name.lower()]
-        if len(name) >= 4:
-            # This is a small hash. 4 seems to be the minimal length for git to
-            # consider something a short hash. This limit is documented in man
-            # git-rev-parse
-            name = name.lower()
-            prefix = name[:2]
-            path = repo_dir(repo, "objects", prefix, mkdir=False)
-            if path:
-                rem = name[2:]
-                for f in path.iterdir():
-                    if str(f).startswith(rem):
-                        candidates.append(prefix + str(f))
+        # This is a complete hash
+        return [name.lower()]
+    elif smallHashRE.match(name):
+        # This is a small hash. 4 seems to be the minimal length for git to
+        # consider something a short hash. This limit is documented in man
+        # git-rev-parse
+        name = name.lower()
+        prefix = name[:2]
+        path = repo_dir(repo, "objects", prefix, mkdir=False)
+        if path:
+            rem = name[2:]
+            for f in path.iterdir():
+                if str(f).startswith(rem):
+                    candidates.append(prefix + str(f))
 
     return candidates
 
