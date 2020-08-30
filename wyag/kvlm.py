@@ -1,7 +1,10 @@
 """Suitable for both commits and tags"""
 
 import collections
-from typing import Dict, List
+from typing import Dict, List, Optional, Any, Set
+
+from wyag.objects import GitObject, object_read
+from wyag.repository import GitRepository
 
 
 def kvlm_parse(raw: bytearray, start: int = 0, dct: Dict[bytes, List[bytes]] = None) -> Dict[bytes, List[bytes]]:
@@ -75,3 +78,35 @@ def kvlm_serialize(kvlm: Dict[bytes, List[bytes]]) -> bytes:
         raise ValueError("message is List[bytes]")
 
     return ret
+
+
+class GitCommit(GitObject):
+    def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
+        self.kvlm: Dict[bytes, List[bytes]] = {}
+        super(GitCommit, self).__init__(repo, b'commit', data)
+
+    def deserialize(self, data):
+        self.kvlm = kvlm_parse(data)
+
+    def serialize(self):
+        return kvlm_serialize(self.kvlm)
+
+
+def log_graphviz(repo: GitRepository, sha: str, seen: Set[str]) -> None:
+    if sha in seen:
+        return
+    seen.add(sha)
+
+    commit = object_read(repo, sha)
+    assert isinstance(commit, GitCommit)
+    assert commit.fmt == b'commit'
+
+    if b'parent' not in commit.kvlm.keys():
+        # Base case: the initial commit.
+        return
+
+    parents = commit.kvlm[b'parent']
+
+    for p in parents:
+        print("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
+        log_graphviz(repo, p.decode("ascii"), seen)

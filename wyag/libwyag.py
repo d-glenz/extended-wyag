@@ -7,7 +7,7 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object
+from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object, cmd_log
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -56,6 +56,13 @@ hashobjectp.add_argument(
     help="Read object from <file>",
 )
 
+logp = argsubparsers.add_parser("log", help="Display history of a given commit.")
+
+logp.add_argument("commit",
+                  default="HEAD",
+                  nargs="?",
+                  help="Commit to start at.")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -67,7 +74,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         # "commit": cmd_commit,
         "hash-object": cmd_hash_object,
         "init": cmd_init,
-        # "log": cmd_log,
+        "log": cmd_log,
         # "ls-tree": cmd_ls_tree,
         # "merge": cmd_merge,
         # "rebase": cmd_rebase,
