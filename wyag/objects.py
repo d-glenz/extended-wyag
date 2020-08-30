@@ -7,7 +7,7 @@ from wyag.repository import GitRepository, repo_file
 
 
 class GitObject:
-    def __init__(self, repo: GitRepository, fmt: bytes = b'', data: Any = None) -> None:
+    def __init__(self, repo: Optional[GitRepository], fmt: bytes = b'', data: Any = None) -> None:
         self.repo = repo
         self.fmt: bytes = fmt
         if data is not None:
@@ -25,7 +25,7 @@ class GitObject:
 
 
 class GitBlob(GitObject):
-    def __init__(self, repo: GitRepository, data: Any = None) -> None:
+    def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
         super(GitBlob, self).__init__(repo, b'blob', data)
 
     def serialize(self) -> Any:
@@ -87,6 +87,8 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
     sha = hashlib.sha1(result).hexdigest()
 
     if actually_write:
+        if obj.repo is None:
+            raise ValueError("repo is None on actually_write in object_write")
         # Compute path
         path = repo_file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=True)
 
