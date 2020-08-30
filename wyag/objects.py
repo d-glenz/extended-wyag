@@ -336,9 +336,11 @@ def object_resolve(repo: GitRepository, name: str) -> List[str]:
                     candidates.append(prefix + str(f))
 
     # search for branches and tags (with or without "refs" and "heads" or "tags" prefixes)
-    for path in [f'refs/heads/{name}', f'refs/tags/{name}', f'refs/{name}', name]:
-        if repo_file(repo, path).exists():
-            candidates.append(ref_resolve(repo, path))
+    for ref_path in [f'refs/heads/{name}', f'refs/tags/{name}', f'refs/{name}', name]:
+        ref = repo_file(repo, ref_path)
+        assert ref is not None
+        if ref.exists():
+            candidates.append(ref_resolve(repo, ref_path))
 
     return candidates
 
