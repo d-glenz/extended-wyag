@@ -7,7 +7,7 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree
+from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree, cmd_checkout
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -67,6 +67,14 @@ lstreep = argsubparsers.add_parser("ls-tree", help="Pretty-print a tree object."
 lstreep.add_argument("object",
                      help="The object to show")
 
+checkoutp = argsubparsers.add_parser("checkout", help="checkout a commit inside of a directory.")
+
+checkoutp.add_argument("commit",
+                       help="The commit or tree to checkout.")
+
+checkoutp.add_argument("path",
+                       help="The EMPTY directory to checkout on.")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -74,7 +82,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
     command_dict = {
         # "add": cmd_add,
         "cat-file": cmd_cat_file,
-        # "checkout": cmd_checkout,
+        "checkout": cmd_checkout,
         # "commit": cmd_commit,
         "hash-object": cmd_hash_object,
         "init": cmd_init,

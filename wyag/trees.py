@@ -1,6 +1,7 @@
+import pathlib
 from typing import Tuple, List, Optional
 
-from wyag.objects import GitObject
+from wyag.objects import GitObject, object_read, GitBlob
 from wyag.repository import GitRepository
 
 
@@ -61,3 +62,18 @@ def tree_serialize(obj: GitTree) -> bytes:
         ret += sha.to_bytes(20, byteorder="big")
 
     return ret
+
+
+def tree_checkout(repo: GitRepository, tree: GitTree, path: pathlib.Path) -> None:
+    for item in tree.items:
+        obj = object_read(repo, item.sha)
+        dest = path / item.path.decode("ascii")
+
+        if isinstance(obj, GitTree):
+            if obj.fmt == b'tree':
+                dest.mkdir(parents=True)
+                tree_checkout(repo, obj, dest)
+        elif isinstance(obj, GitBlob):
+            if obj.fmt == b'blob':
+                with open(dest, 'wb') as f:
+                    f.write(obj.blobdata)
