@@ -2,8 +2,7 @@ import argparse
 import pathlib
 
 from wyag.repository import GitRepository, repo_create, repo_find
-from wyag.objects import cat_file, object_hash, object_find, object_read
-from wyag.kvlm import log_graphviz, GitCommit, tag_create
+from wyag.objects import cat_file, object_hash, object_find, object_read, log_graphviz, GitCommit, tag_create
 from wyag.trees import GitTree, tree_checkout
 from wyag.refs import ref_list, show_ref
 
