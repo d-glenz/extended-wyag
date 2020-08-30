@@ -7,7 +7,7 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object, cmd_log
+from wyag.commands import cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -63,6 +63,10 @@ logp.add_argument("commit",
                   nargs="?",
                   help="Commit to start at.")
 
+lstreep = argsubparsers.add_parser("ls-tree", help="Pretty-print a tree object.")
+lstreep.add_argument("object",
+                     help="The object to show")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -75,7 +79,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         "hash-object": cmd_hash_object,
         "init": cmd_init,
         "log": cmd_log,
-        # "ls-tree": cmd_ls_tree,
+        "ls-tree": cmd_ls_tree,
         # "merge": cmd_merge,
         # "rebase": cmd_rebase,
         # "rev-parse": cmd_rev_parse,

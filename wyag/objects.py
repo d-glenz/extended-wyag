@@ -71,7 +71,7 @@ def object_read(repo: GitRepository, sha: str) -> GitObject:
         return c(repo, raw[y+1:])
 
 
-def object_find(repo: GitRepository, name: str, fmt: Optional[str] = None, follow: bool = True) -> str:
+def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> str:
     """Will resolve objects by full hash, short hash, tags, ..."""
     return name
 
@@ -100,7 +100,7 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
 
 
 # TODO: function name inconsistent
-def cat_file(repo: GitRepository, obj: Any, fmt: Optional[str] = None) -> None:
+def cat_file(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
     obj = object_read(repo, object_find(repo, obj, fmt=fmt))
     sys.stdout.buffer.write(obj.serialize())
 
