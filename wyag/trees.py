@@ -40,7 +40,8 @@ def tree_parse_one(raw: bytes, start: int = 0) -> Tuple[int, GitTreeLeaf]:
     # hex(..) adds 0x in front
     sha = hex(int.from_bytes(raw[y+1:y+21], "big"))[2:]
 
-    return y+21, GitTreeLeaf(mode, path, sha)
+
+    return y+21, GitTreeLeaf(mode, path, format(int_val, "040x"))
 
 
 def tree_parse(raw: bytes) -> List[GitTreeLeaf]:
