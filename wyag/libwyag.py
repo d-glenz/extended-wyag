@@ -8,7 +8,7 @@ from typing import List
 import zlib  # noqa: F401
 
 from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log,
-                           cmd_ls_tree, cmd_checkout, cmd_show_ref, cmd_tag)
+                           cmd_ls_tree, cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse)
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -92,6 +92,17 @@ tagp.add_argument("object",
                   nargs="?",
                   help="The object the new tag will point to")
 
+revparsep = argsubparsers.add_parser("rev-parse", help="Parse revision (or other objects) identifiers")
+revparsep.add_argument("--wyag-type",
+                       metavar="type",
+                       dest="type",
+                       choices=["blob", "commit", "tag", "tree"],
+                       default=None,
+                       help="Specify the expected type")
+
+revparsep.add_argument("name",
+                       help="The name to parse")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -107,7 +118,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         "ls-tree": cmd_ls_tree,
         # "merge": cmd_merge,
         # "rebase": cmd_rebase,
-        # "rev-parse": cmd_rev_parse,
+        "rev-parse": cmd_rev_parse,
         # "rm": cmd_rm,
         "show-ref": cmd_show_ref,
         "tag": cmd_tag,

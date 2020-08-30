@@ -103,3 +103,13 @@ def cmd_tag(args: argparse.Namespace) -> None:
     else:
         refs = ref_list(repo)
         show_ref(repo, refs["tags"], with_hash=False)
+
+
+def cmd_rev_parse(args: argparse.Namespace) -> None:
+    if args.type:
+        fmt = args.type.encode()
+
+    repo = repo_find()
+    assert repo is not None
+
+    print(object_find(repo, args.name, fmt, follow=True))
