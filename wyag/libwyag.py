@@ -27,6 +27,7 @@ catfilep = argsubparsers.add_parser("cat-file", help="Provide content of reposit
 catfilep.add_argument(
     "type",
     metavar="type",
+    nargs='?',
     choices=["blob", "commit", "tag", "tree"],
     help="Specify the type",
 )

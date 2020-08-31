@@ -16,7 +16,8 @@ def cmd_cat_file(args: argparse.Namespace) -> None:
     if repo is None:
         raise ValueError("Git repository not found!")
 
-    cat_file(repo, args.object, fmt=args.type.encode())
+    fmt = args.type.encode() if args.type else None
+    cat_file(repo, args.object, fmt=fmt)
 
 
 def cmd_hash_object(args: argparse.Namespace) -> None:
