@@ -7,8 +7,8 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log,
-                           cmd_ls_tree, cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse)
+from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree, 
+                           cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit)
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -104,6 +104,14 @@ revparsep.add_argument("--wyag-type",
 revparsep.add_argument("name",
                        help="The name to parse")
 
+commitp = argsubparsers.add_parser("commit", help="Record changes to the repository")
+commitp.add_argument("author",
+                     help="Specify the author")
+commitp.add_argument("committer",
+                     help="Specify who committed.")
+commitp.add_argument("message",
+                     help="Specify the commit message")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -112,7 +120,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         # "add": cmd_add,
         "cat-file": cmd_cat_file,
         "checkout": cmd_checkout,
-        # "commit": cmd_commit,
+        "commit": cmd_commit,
         "hash-object": cmd_hash_object,
         "init": cmd_init,
         "log": cmd_log,

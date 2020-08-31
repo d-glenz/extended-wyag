@@ -5,6 +5,7 @@ from wyag.repository import GitRepository, repo_create, repo_find
 from wyag.objects import cat_file, object_hash, object_find, object_read, log_graphviz, GitCommit, ref_list, tag_create
 from wyag.trees import GitTree, tree_checkout
 from wyag.refs import show_ref
+from wyag.index import read_index
 
 
 def cmd_init(args: argparse.Namespace) -> None:
@@ -114,3 +115,11 @@ def cmd_rev_parse(args: argparse.Namespace) -> None:
     assert repo is not None
 
     print(object_find(repo, args.name, fmt, follow=True))
+
+
+def cmd_commit(args: argparse.Namespace) -> None:
+    index = read_index()
+    if len(index) == 0:
+        raise ValueError("nothing to commit")
+
+    raise NotImplementedError("Committing still not implemented")
