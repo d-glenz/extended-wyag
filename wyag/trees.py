@@ -1,8 +1,10 @@
+import io
 import pathlib
 from typing import Tuple, List, Optional
 
-from wyag.objects import GitObject, object_read, GitBlob
+from wyag.objects import GitObject, object_read, GitBlob, object_hash
 from wyag.repository import GitRepository
+from wyag.index import GitIndexEntry
 
 
 class GitTreeLeaf:
@@ -77,3 +79,16 @@ def tree_checkout(repo: GitRepository, tree: GitTree, path: pathlib.Path) -> Non
             if obj.fmt == b'blob':
                 with open(dest, 'wb') as f:
                     f.write(obj.blobdata)
+
+
+def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
+    """Write a tree object from the current index entries."""
+    tree_entries = []
+
+    for entry in idx:
+        assert '/' not in entry.name, "currently only supports a single, top-level directory"
+
+        mode_path = bytes('{:o} {}'.format(entry.mode, entry.name).encode())
+        tree_entry = mode_path + b'\x00' + entry.obj.encode()
+        tree_entries.append(tree_entry)
+    return object_hash(io.BytesIO(b''.join(tree_entries)), b'tree', repo)

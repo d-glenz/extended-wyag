@@ -7,8 +7,9 @@ import sys
 from typing import List
 import zlib  # noqa: F401
 
-from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree, 
-                           cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit)
+from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
+                           cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
+                           cmd_write_tree)
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -112,6 +113,8 @@ commitp.add_argument("committer",
 commitp.add_argument("message",
                      help="Specify the commit message")
 
+writetreep = argsubparsers.add_parser("write-tree", help="Create a tree object from the current index")
+
 
 def main(argv: List[str] = sys.argv[1:]) -> None:
     args = argparser.parse_args(argv)
@@ -131,6 +134,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         # "rm": cmd_rm,
         "show-ref": cmd_show_ref,
         "tag": cmd_tag,
+        "write-tree": cmd_write_tree,
     }
 
     try:

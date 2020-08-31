@@ -3,7 +3,7 @@ from enum import Enum
 import hashlib
 import stat
 import struct
-from typing import List, Tuple
+from typing import List
 
 from wyag.repository import repo_path, repo_find
 
@@ -20,23 +20,29 @@ mode_types = {
     "b1110": ModeTypes.GITLINK
 }
 
+S_IFGITLINK = 0o160000
+
 
 class GitIndexEntry:
     def __init__(self, ctime_s: int, ctime_n: int, mtime_s: int, mtime_n: int, dev: int, ino: int, mode: int,
                  uid: int, gid: int, size: int, sha1: str, flags: int, path: str) -> None:
-        self.ctime = (ctime_s, ctime_n) # The last time a file's metadata changed.  This is a tuple (seconds, nanoseconds)
+        # The last time a file's metadata changed.
+        # This is a tuple (seconds, nanoseconds)
+        self.ctime = (ctime_s, ctime_n)
 
-        self.mtime = (mtime_s, mtime_n) # The last time a file's data changed.  This is a tuple (seconds, nanoseconds)#
+        self.mtime = (mtime_s, mtime_n)  # The last time a file's data changed.  This is a tuple (seconds, nanoseconds)#
 
-        self.dev = dev # The ID of device containing this file#
-        self.ino = ino # The file's inode number#
-        self.mode = mode # The object type, either b1000 (regular), b1010 (symlink), b1110 (gitlink). #
-                         # The object permissions, an integer.#
+        self.dev = dev  # The ID of device containing this file#
+        self.ino = ino  # The file's inode number#
 
-        self.uid = uid # User ID of owner#
-        self.gid = gid # Group ID of ownner (according to stat 2.  Isn'th)#
-        self.size = size # Size of this object, in bytes#
-        self.obj = sha1 # The object's hash as a hex string#
+        # The object type, either b1000 (regular), b1010 (symlink), b1110 (gitlink). #
+        # The object permissions, an integer.#
+        self.mode = mode
+
+        self.uid = uid  # User ID of owner#
+        self.gid = gid  # Group ID of ownner (according to stat 2.  Isn'th)#
+        self.size = size  # Size of this object, in bytes#
+        self.obj = sha1  # The object's hash as a hex string#
 
         self.flags = flags
         # self.flag_assume_valid = flag_assume_valid
@@ -50,7 +56,8 @@ class GitIndexEntry:
         self.hex_sha = sha_to_hex(self.obj)
 
         if self.mtype() == ModeTypes.REGULAR:
-            assert (self.mode_perms() == "0644" or self.mode_perms() == "0755"), f"mode_type: REGULAR, but mode_perms: {self.mode_perms()!r}"
+            assert (self.mode_perms() == "0644" or self.mode_perms() == "0755"), (
+                    f"mode_type: REGULAR, but mode_perms: {self.mode_perms()!r}")
 
     def mode_type(self) -> int:
         """The object type, either b1000 (regular), b1010 (symlink), b1110 (gitlink). """
@@ -66,12 +73,13 @@ class GitIndexEntry:
     def mode_perms(self) -> str:
         return "0{0:o}".format(self.mode & int("0000000111111111", 2))
 
+
 def sha_to_hex(sha: str) -> str:
     """Takes a string and returns the hex of the sha within
        https://github.com/dulwich/dulwich/blob/master/dulwich/objects.py"""
-    hexsha = binascii.hexlify(sha)
+    hexsha = binascii.hexlify(sha.encode())
     assert len(hexsha) == 40, "Incorrect length of sha1 string: %d" % hexsha
-    return hexsha
+    return hexsha.decode()
 
 
 def S_ISGITLINK(m: int) -> bool:
@@ -80,7 +88,6 @@ def S_ISGITLINK(m: int) -> bool:
       m: Mode to check
     Returns: a ``boolean``
     """
-    S_IFGITLINK = 0o160000
     return (stat.S_IFMT(m) == S_IFGITLINK)
 
 
