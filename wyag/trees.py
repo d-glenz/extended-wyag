@@ -16,10 +16,11 @@ class GitTreeLeaf:
 
 class GitTree(GitObject):
     def __init__(self, repo: Optional[GitRepository], data: bytes = None) -> None:
-        assert data is not None, "Tree bytes empty"
-
-        self.items = tree_parse(data)
         super(GitTree, self).__init__(repo, b'tree', data)
+
+    def deserialize(self, data: bytes) -> None:
+        assert data is not None, "Tree bytes empty"
+        self.items = tree_parse(data)
 
     def serialize(self):
         return tree_serialize(self)
