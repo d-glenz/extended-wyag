@@ -25,6 +25,9 @@ class GitTree(GitObject):
     def serialize(self):
         return tree_serialize(self)
 
+    def pretty_print(self) -> str:
+        return tree_print(self)
+
 
 def tree_parse_one(raw: bytes, start: int = 0) -> Tuple[int, GitTreeLeaf]:
     # Find the space terminator of the mode
@@ -93,3 +96,15 @@ def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
         tree_entry = mode_path + b'\x00' + entry.obj.encode()
         tree_entries.append(tree_entry)
     return object_hash(io.BytesIO(b''.join(tree_entries)), b'tree', repo)
+
+
+def tree_print(obj: GitTree) -> str:
+    ret = ''
+    for i in obj.items:
+        try:
+            fmt = object_read(repo_find(), i.sha).fmt.decode()
+        except FileNotFoundError:
+            fmt = '????'
+        ret += f"{i.mode.decode()} {fmt} {i.sha.zfill(40)}    {i.path.decode()}\n"
+
+    return ret

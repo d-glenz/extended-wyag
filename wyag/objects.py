@@ -26,12 +26,18 @@ class GitObject:
     def deserialize(self, data: Any) -> None:
         raise NotImplementedError("Unimplemented method serialize")
 
+    def pretty_print(self) -> None:
+        raise NotImplementedError("Unimplemented method pretty_print")
+
 
 class GitBlob(GitObject):
     def __init__(self, repo: Optional[GitRepository], data: Any = None) -> None:
         super(GitBlob, self).__init__(repo, b'blob', data)
 
     def serialize(self) -> Any:
+        return self.blobdata
+
+    def pretty_print(self) -> Any:
         return self.blobdata
 
     def deserialize(self, data: Any) -> None:
@@ -101,7 +107,7 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
 def cat_file(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
     obj = object_find(repo, obj, fmt=fmt)
     obj_content = object_read(repo, obj)
-    sys.stdout.buffer.write(obj_content.serialize())
+    sys.stdout.write(obj_content.pretty_print())
 
 
 def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) -> str:
@@ -205,6 +211,9 @@ class GitCommit(GitObject):
         self.kvlm = kvlm_parse(data)
 
     def serialize(self):
+        return kvlm_serialize(self.kvlm)
+
+    def pretty_print(self):
         return kvlm_serialize(self.kvlm)
 
 
