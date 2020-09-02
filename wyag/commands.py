@@ -1,10 +1,12 @@
 import argparse
 import pathlib
 
+from wyag.base import GitObjectTypeError
 from wyag.repository import GitRepository, repo_create, repo_find
-from wyag.objects import (cat_file, object_hash, object_find, object_read, log_graphviz, GitCommit,
-                          ref_list, tag_create, Sha)
-from wyag.trees import GitTree, tree_checkout, tree_write, tree_read
+from wyag.objects import (object_hash, object_find, log_graphviz,
+                          ref_list, tag_create, Sha, object_get_type, commit_read)
+from wyag.frontend import cat_file
+from wyag.trees import tree_checkout, tree_write, tree_read
 from wyag.refs import show_ref
 from wyag.index import read_index
 
@@ -53,7 +55,7 @@ def cmd_ls_tree(args: argparse.Namespace) -> None:
 
     for item in obj_content.items:
         mode = "0" * (6 - len(item.mode)) + item.mode.decode("ascii")
-        fmt = object_read(repo, item.sha).fmt.decode("ascii")
+        fmt = object_get_type(repo, item.sha).decode("ascii")
         print(f"{mode} {fmt} {item.sha}\t{item.path.decode('ascii')}")
 
 
@@ -63,14 +65,12 @@ def cmd_checkout(args: argparse.Namespace) -> None:
 
     obj = object_find(repo, args.commit)
     assert obj is not None
-    obj_contents = object_read(repo, obj)
-    # assert isinstance(obj, GitCommit)
 
-    # If the object is a commit, we grab its tree
-    if isinstance(obj_contents, GitCommit):
-        obj_contents = object_read(repo, Sha(obj_contents.kvlm[b'tree'][0].decode("ascii")))
-
-    assert isinstance(obj_contents, GitTree)
+    try:
+        commit_contents = commit_read(repo, obj)
+        tree_contents = tree_read(repo, Sha(commit_contents.kvlm[b'tree'][0].decode("ascii")))
+    except GitObjectTypeError:
+        raise ValueError(f"Cannot checkout {args.commit} since it's not a commit!")
 
     # Verify that path is an empty directory
     path = pathlib.Path(args.path)
@@ -82,7 +82,7 @@ def cmd_checkout(args: argparse.Namespace) -> None:
     else:
         path.mkdir(parents=True)
 
-    tree_checkout(repo, obj_contents, path.resolve())
+    tree_checkout(repo, tree_contents, path.resolve())
 
 
 def cmd_show_ref(args: argparse.Namespace) -> None:

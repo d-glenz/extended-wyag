@@ -3,7 +3,7 @@ import pathlib
 from typing import Tuple, List, Optional, Any
 
 from wyag.base import GitObjectTypeError, zlib_read
-from wyag.objects import GitObject, object_read, GitBlob, object_hash, Sha
+from wyag.objects import GitObject, object_get_type, object_hash, Sha, blob_read
 from wyag.repository import GitRepository, repo_find, repo_file
 from wyag.index import GitIndexEntry
 
@@ -73,17 +73,15 @@ def tree_serialize(obj: GitTree) -> bytes:
 
 def tree_checkout(repo: GitRepository, tree: GitTree, path: pathlib.Path) -> None:
     for item in tree.items:
-        obj = object_read(repo, item.sha)
         dest = path / item.path.decode("ascii")
-
-        if isinstance(obj, GitTree):
-            if obj.fmt == b'tree':
-                dest.mkdir(parents=True)
-                tree_checkout(repo, obj, dest)
-        elif isinstance(obj, GitBlob):
-            if obj.fmt == b'blob':
-                with open(dest, 'wb') as f:
-                    f.write(obj.blobdata)
+        try:
+            tree = tree_read(repo, item.sha)
+            dest.mkdir(parents=True)
+            tree_checkout(repo, tree, dest)
+        except GitObjectTypeError:
+            blob = blob_read(repo, item.sha)
+            with open(dest, 'wb') as f:
+                f.write(blob.blobdata)
 
 
 def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
@@ -105,7 +103,7 @@ def tree_print(obj: GitTree) -> str:
         try:
             repo = repo_find()
             assert repo is not None
-            fmt = object_read(repo, i.sha).fmt.decode()
+            fmt = object_get_type(repo, i.sha).decode()
         except FileNotFoundError:
             fmt = '????'
         ret += f"{i.mode.decode()} {fmt} {i.sha.zfill(40)}    {i.path.decode()}\n"

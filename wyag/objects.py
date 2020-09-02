@@ -2,7 +2,6 @@ import collections
 import hashlib
 import pathlib
 import re
-import sys
 from typing import Any, Optional, BinaryIO, Dict, List, Set, NewType
 import zlib
 
@@ -42,13 +41,13 @@ class GitBlob(GitObject):
         return self.blobdata
 
     def pretty_print(self) -> Any:
-        return self.blobdata
+        return self.blobdata.decode()
 
     def deserialize(self, data: Any) -> None:
         self.blobdata = data
 
 
-def object_read(repo: GitRepository, sha: Sha) -> GitObject:
+def blob_read(repo: GitRepository, sha: Sha) -> GitBlob:
     """Read object object_id from Git repository repo. Return a GitObject whose exact
        type depends on the object"""
     path = repo_file(repo, "objects", sha[0:2], sha[2:])
@@ -66,19 +65,23 @@ def object_read(repo: GitRepository, sha: Sha) -> GitObject:
     if size != len(raw) - y - 1:
         raise ValueError(f"Malformed object {sha}: bad length")
 
-    # Pick constructor
-    # if fmt == b'commit':
-    #     c = GitCommit
-    # elif fmt == b'tree':
-    #     c = GitTree
-    # elif fmt == b'tag':
-    #     c = GitTag
-    if fmt == b'blob':
-        c = GitBlob
-    else:
-        raise ValueError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
+    if fmt != b'commit':
+        raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
-    return c(repo, raw[y+1:])
+    return GitBlob(repo, raw[y+1:])
+
+
+def object_get_type(repo: GitRepository, sha: Sha) -> bytes:
+    """Read object object_id from Git repository repo. Return a GitObject whose exact
+       type depends on the object"""
+    path = repo_file(repo, "objects", sha[0:2], sha[2:])
+    assert path is not None, f"Path {path} for object {sha} could not be found"
+
+    raw = zlib_read(path)
+
+    # Read object type
+    x = raw.find(b' ')
+    return raw[0:x]
 
 
 def object_write(obj: GitObject, actually_write: bool = True) -> str:
@@ -102,13 +105,6 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
             f.write(zlib.compress(result))
 
     return sha
-
-
-# TODO: function name inconsistent
-def cat_file(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
-    obj = object_find(repo, obj, fmt=fmt)
-    obj_content = object_read(repo, obj)
-    sys.stdout.write(obj_content.pretty_print())
 
 
 def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) -> str:
@@ -394,20 +390,20 @@ def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, fol
         return Sha(sha)
 
     while True:
-        obj = object_read(repo, Sha(sha))
+        obj_fmt = object_get_type(repo, Sha(sha))
 
-        if obj.fmt == fmt:
+        if obj_fmt == fmt:
             return Sha(sha)
 
         if not follow:
             return None
 
-        assert isinstance(obj, GitCommit)
+        commit = commit_read(repo, Sha(sha))
 
         # Follow tags
-        if obj.fmt == b'tag':
-            sha = obj.kvlm[b'object'][0].decode("ascii")
-        elif obj.fmt == b'commit' and fmt == b'tree':
-            sha = obj.kvlm[b'tree'][0].decode('ascii')
+        if obj_fmt == b'tag':
+            sha = commit.kvlm[b'object'][0].decode("ascii")
+        elif obj_fmt == b'commit' and fmt == b'tree':
+            sha = commit.kvlm[b'tree'][0].decode('ascii')
         else:
             return None
