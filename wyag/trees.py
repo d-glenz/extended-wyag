@@ -2,8 +2,9 @@ import io
 import pathlib
 from typing import Tuple, List, Optional, Any
 
+from wyag.base import GitObjectTypeError, zlib_read
 from wyag.objects import GitObject, object_read, GitBlob, object_hash, Sha
-from wyag.repository import GitRepository, repo_find
+from wyag.repository import GitRepository, repo_find, repo_file
 from wyag.index import GitIndexEntry
 
 
@@ -110,3 +111,27 @@ def tree_print(obj: GitTree) -> str:
         ret += f"{i.mode.decode()} {fmt} {i.sha.zfill(40)}    {i.path.decode()}\n"
 
     return ret
+
+
+def tree_read(repo: GitRepository, sha: Sha) -> GitTree:
+    """Read object object_id from Git repository repo. Return a GitObject whose exact
+       type depends on the object"""
+    path = repo_file(repo, "objects", sha[0:2], sha[2:])
+    assert path is not None, f"Path {path} for object {sha} could not be found"
+
+    raw = zlib_read(path)
+
+    # Read object type
+    x = raw.find(b' ')
+    fmt = raw[0:x]
+
+    # Read and validate object size
+    y = raw.find(b'\x00', x)
+    size = int(raw[x:y].decode("ascii"))
+    if size != len(raw) - y - 1:
+        raise ValueError(f"Malformed object {sha}: bad length")
+
+    if fmt != b'blob':
+        raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
+
+    return GitTree(repo, raw[y+1:])

@@ -4,9 +4,9 @@ import pathlib
 import re
 import sys
 from typing import Any, Optional, BinaryIO, Dict, List, Set, NewType
-from typing_extensions import Literal
 import zlib
 
+from wyag.base import GitObjectTypeError, zlib_read
 from wyag.repository import GitRepository, repo_file, repo_dir
 
 
@@ -52,36 +52,33 @@ def object_read(repo: GitRepository, sha: Sha) -> GitObject:
     """Read object object_id from Git repository repo. Return a GitObject whose exact
        type depends on the object"""
     path = repo_file(repo, "objects", sha[0:2], sha[2:])
+    assert path is not None, f"Path {path} for object {sha} could not be found"
 
-    if path is None:
-        ValueError(f"Path {path} for object {sha} could not be found")
+    raw = zlib_read(path)
 
-    with open(str(path), "rb") as f:
-        raw = zlib.decompress(f.read())
+    # Read object type
+    x = raw.find(b' ')
+    fmt = raw[0:x]
 
-        # Read object type
-        x = raw.find(b' ')
-        fmt = raw[0:x]
+    # Read and validate object size
+    y = raw.find(b'\x00', x)
+    size = int(raw[x:y].decode("ascii"))
+    if size != len(raw) - y - 1:
+        raise ValueError(f"Malformed object {sha}: bad length")
 
-        # Read and validate object size
-        y = raw.find(b'\x00', x)
-        size = int(raw[x:y].decode("ascii"))
-        if size != len(raw) - y - 1:
-            raise ValueError(f"Malformed object {sha}: bad length")
+    # Pick constructor
+    # if fmt == b'commit':
+    #     c = GitCommit
+    # elif fmt == b'tree':
+    #     c = GitTree
+    # elif fmt == b'tag':
+    #     c = GitTag
+    if fmt == b'blob':
+        c = GitBlob
+    else:
+        raise ValueError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
-        # Pick constructor
-        # if fmt == b'commit':
-        #     c = GitCommit
-        # elif fmt == b'tree':
-        #     c = GitTree
-        # elif fmt == b'tag':
-        #     c = GitTag
-        if fmt == b'blob':
-            c = GitBlob
-        else:
-            raise ValueError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
-
-        return c(repo, raw[y+1:])
+    return c(repo, raw[y+1:])
 
 
 def object_write(obj: GitObject, actually_write: bool = True) -> str:
@@ -221,14 +218,36 @@ class GitCommit(GitObject):
         return kvlm_serialize(self.kvlm).decode()
 
 
+def commit_read(repo: GitRepository, sha: Sha) -> GitCommit:
+    """Read object object_id from Git repository repo. Return a GitObject whose exact
+       type depends on the object"""
+    path = repo_file(repo, "objects", sha[0:2], sha[2:])
+    assert path is not None, f"Path {path} for object {sha} could not be found"
+
+    raw = zlib_read(path)
+
+    # Read object type
+    x = raw.find(b' ')
+    fmt = raw[0:x]
+
+    # Read and validate object size
+    y = raw.find(b'\x00', x)
+    size = int(raw[x:y].decode("ascii"))
+    if size != len(raw) - y - 1:
+        raise ValueError(f"Malformed object {sha}: bad length")
+
+    if fmt != b'commit':
+        raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
+
+    return GitCommit(repo, raw[y+1:])
+
+
 def log_graphviz(repo: GitRepository, sha: Sha, seen: Set[str]) -> None:
     if sha in seen:
         return
     seen.add(sha)
 
-    commit = object_read(repo, sha)
-    assert isinstance(commit, GitCommit)
-    assert commit.fmt == b'commit'
+    commit = commit_read(repo, sha)
 
     if b'parent' not in commit.kvlm.keys():
         # Base case: the initial commit.
