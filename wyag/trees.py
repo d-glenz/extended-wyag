@@ -1,14 +1,14 @@
 import io
 import pathlib
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Any
 
-from wyag.objects import GitObject, object_read, GitBlob, object_hash
-from wyag.repository import GitRepository
+from wyag.objects import GitObject, object_read, GitBlob, object_hash, Sha
+from wyag.repository import GitRepository, repo_find
 from wyag.index import GitIndexEntry
 
 
 class GitTreeLeaf:
-    def __init__(self, mode: bytes, path: bytes, sha: str) -> None:
+    def __init__(self, mode: bytes, path: bytes, sha: Sha) -> None:
         self.mode = mode
         self.path = path
         self.sha = sha
@@ -22,7 +22,7 @@ class GitTree(GitObject):
         assert data is not None, "Tree bytes empty"
         self.items = tree_parse(data)
 
-    def serialize(self):
+    def serialize(self) -> Any:
         return tree_serialize(self)
 
     def pretty_print(self) -> str:
@@ -46,7 +46,7 @@ def tree_parse_one(raw: bytes, start: int = 0) -> Tuple[int, GitTreeLeaf]:
     # hex(..) adds 0x in front
     sha = hex(int.from_bytes(raw[y+1:y+21], "big"))[2:]
 
-    return y+21, GitTreeLeaf(mode, path, format(int(sha), "040x"))
+    return y+21, GitTreeLeaf(mode, path, Sha(format(int(sha), "040x")))
 
 
 def tree_parse(raw: bytes) -> List[GitTreeLeaf]:
@@ -102,7 +102,9 @@ def tree_print(obj: GitTree) -> str:
     ret = ''
     for i in obj.items:
         try:
-            fmt = object_read(repo_find(), i.sha).fmt.decode()
+            repo = repo_find()
+            assert repo is not None
+            fmt = object_read(repo, i.sha).fmt.decode()
         except FileNotFoundError:
             fmt = '????'
         ret += f"{i.mode.decode()} {fmt} {i.sha.zfill(40)}    {i.path.decode()}\n"

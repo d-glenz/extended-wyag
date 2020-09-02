@@ -2,7 +2,7 @@ import argparse
 import pathlib
 
 from wyag.repository import GitRepository, repo_create, repo_find
-from wyag.objects import cat_file, object_hash, object_find, object_read, log_graphviz, GitCommit, ref_list, tag_create
+from wyag.objects import cat_file, object_hash, object_find, object_read, log_graphviz, GitCommit, ref_list, tag_create, Sha
 from wyag.trees import GitTree, tree_checkout, tree_write
 from wyag.refs import show_ref
 from wyag.index import read_index
@@ -69,7 +69,7 @@ def cmd_checkout(args: argparse.Namespace) -> None:
     # If the object is a commit, we grab its tree
     if isinstance(obj_contents, GitCommit):
         if obj_contents.fmt == b'commit':
-            obj_contents = object_read(repo, obj_contents.kvlm[b'tree'][0].decode("ascii"))
+            obj_contents = object_read(repo, Sha(obj_contents.kvlm[b'tree'][0].decode("ascii")))
 
     assert isinstance(obj_contents, GitTree)
 

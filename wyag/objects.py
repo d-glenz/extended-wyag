@@ -3,14 +3,18 @@ import hashlib
 import pathlib
 import re
 import sys
-from typing import Any, Optional, BinaryIO, Dict, List, Set
+from typing import Any, Optional, BinaryIO, Dict, List, Set, NewType
+from typing_extensions import Literal
 import zlib
 
 from wyag.repository import GitRepository, repo_file, repo_dir
 
 
+Sha = NewType('Sha', str)
+
+
 class GitObject:
-    def __init__(self, repo: Optional[GitRepository], fmt: bytes = b'', data: Any = None) -> None:
+    def __init__(self, repo: Optional[GitRepository], fmt: bytes, data: Any = None) -> None:
         self.repo = repo
         self.fmt: bytes = fmt
         if data is not None:
@@ -26,7 +30,7 @@ class GitObject:
     def deserialize(self, data: Any) -> None:
         raise NotImplementedError("Unimplemented method serialize")
 
-    def pretty_print(self) -> None:
+    def pretty_print(self) -> str:
         raise NotImplementedError("Unimplemented method pretty_print")
 
 
@@ -44,7 +48,7 @@ class GitBlob(GitObject):
         self.blobdata = data
 
 
-def object_read(repo: GitRepository, sha: str) -> GitObject:
+def object_read(repo: GitRepository, sha: Sha) -> GitObject:
     """Read object object_id from Git repository repo. Return a GitObject whose exact
        type depends on the object"""
     path = repo_file(repo, "objects", sha[0:2], sha[2:])
@@ -207,17 +211,17 @@ class GitCommit(GitObject):
         self.kvlm: Dict[bytes, List[bytes]] = {}
         super(GitCommit, self).__init__(repo, obj_type, data)
 
-    def deserialize(self, data):
+    def deserialize(self, data: Any) -> None:
         self.kvlm = kvlm_parse(data)
 
-    def serialize(self):
+    def serialize(self) -> Any:
         return kvlm_serialize(self.kvlm)
 
-    def pretty_print(self):
-        return kvlm_serialize(self.kvlm)
+    def pretty_print(self) -> str:
+        return kvlm_serialize(self.kvlm).decode()
 
 
-def log_graphviz(repo: GitRepository, sha: str, seen: Set[str]) -> None:
+def log_graphviz(repo: GitRepository, sha: Sha, seen: Set[str]) -> None:
     if sha in seen:
         return
     seen.add(sha)
@@ -234,7 +238,7 @@ def log_graphviz(repo: GitRepository, sha: str, seen: Set[str]) -> None:
 
     for p in parents:
         print("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
-        log_graphviz(repo, p.decode("ascii"), seen)
+        log_graphviz(repo, Sha(p.decode("ascii")), seen)
 
 
 class GitTag(GitCommit):
@@ -354,7 +358,7 @@ def object_resolve(repo: GitRepository, name: str) -> List[str]:
     return candidates
 
 
-def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> Optional[str]:
+def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> Optional[Sha]:
     """Will resolve objects by full hash, short hash, tags, ..."""
     all_shas = object_resolve(repo, name)
 
@@ -368,13 +372,13 @@ def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, fol
     sha = all_shas[0]
 
     if not fmt:
-        return sha
+        return Sha(sha)
 
     while True:
-        obj = object_read(repo, sha)
+        obj = object_read(repo, Sha(sha))
 
         if obj.fmt == fmt:
-            return sha
+            return Sha(sha)
 
         if not follow:
             return None
@@ -384,7 +388,7 @@ def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, fol
         # Follow tags
         if obj.fmt == b'tag':
             sha = obj.kvlm[b'object'][0].decode("ascii")
-        elif obj.fmt == f'commit' and fmt == b'tree':
+        elif obj.fmt == b'commit' and fmt == b'tree':
             sha = obj.kvlm[b'tree'][0].decode('ascii')
         else:
             return None
