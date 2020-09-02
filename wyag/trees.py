@@ -47,7 +47,10 @@ def tree_parse_one(raw: bytes, start: int = 0) -> Tuple[int, GitTreeLeaf]:
     # hex(..) adds 0x in front
     sha = hex(int.from_bytes(raw[y+1:y+21], "big"))[2:]
 
-    return y+21, GitTreeLeaf(mode, path, Sha(format(int(sha), "040x")))
+    if len(sha) < 40:
+        sha = "0" + sha
+
+    return y+21, GitTreeLeaf(mode, path, Sha(sha))
 
 
 def tree_parse(raw: bytes) -> List[GitTreeLeaf]:
@@ -134,7 +137,7 @@ def tree_read(repo: GitRepository, sha: Sha) -> GitTree:
     if size != len(raw) - y - 1:
         raise ValueError(f"Malformed object {sha}: bad length")
 
-    if fmt != b'blob':
+    if fmt != b'tree':
         raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
     return GitTree(repo, raw[y+1:])
