@@ -1,9 +1,9 @@
 import io
 import pathlib
-from typing import Tuple, List, Optional, Any
+from typing import Tuple, List, Optional, BinaryIO, Any
 
 from wyag.base import GitObjectTypeError, zlib_read
-from wyag.objects import GitObject, object_get_type, object_hash, Sha, blob_read
+from wyag.objects import GitObject, object_get_type, Sha, blob_read, object_write
 from wyag.repository import GitRepository, repo_find, repo_file
 from wyag.index import GitIndexEntry
 
@@ -84,6 +84,11 @@ def tree_checkout(repo: GitRepository, tree: GitTree, path: pathlib.Path) -> Non
                 f.write(blob.blobdata)
 
 
+def tree_hash(fd: BinaryIO, repo: Optional[GitRepository] = None) -> str:
+    data = fd.read()
+    return object_write(GitTree(repo, data), repo is not None)
+
+
 def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
     """Write a tree object from the current index entries."""
     tree_entries = []
@@ -94,7 +99,7 @@ def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
         mode_path = bytes('{:o} {}'.format(entry.mode, entry.name).encode())
         tree_entry = mode_path + b'\x00' + entry.obj.encode()
         tree_entries.append(tree_entry)
-    return object_hash(io.BytesIO(b''.join(tree_entries)), b'tree', repo)
+    return tree_hash(io.BytesIO(b''.join(tree_entries)), repo)
 
 
 def tree_print(obj: GitTree) -> str:

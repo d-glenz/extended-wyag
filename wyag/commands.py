@@ -3,9 +3,9 @@ import pathlib
 
 from wyag.base import GitObjectTypeError
 from wyag.repository import GitRepository, repo_create, repo_find
-from wyag.objects import (object_hash, object_find, log_graphviz,
+from wyag.objects import (object_find, log_graphviz,
                           ref_list, tag_create, Sha, object_get_type, commit_read)
-from wyag.frontend import cat_file
+from wyag.frontend import cat_file, generic_object_hash
 from wyag.trees import tree_checkout, tree_write, tree_read
 from wyag.refs import show_ref
 from wyag.index import read_index
@@ -28,9 +28,9 @@ def cmd_hash_object(args: argparse.Namespace) -> None:
 
     with open(args.path, "rb") as fd:
         if args.write:
-            sha = object_hash(fd, args.type.encode(), GitRepository("."))
+            sha = generic_object_hash(fd, args.type.encode(), GitRepository("."))
         else:
-            sha = object_hash(fd, args.type.encode(), None)
+            sha = generic_object_hash(fd, args.type.encode(), None)
         print(sha)
 
 

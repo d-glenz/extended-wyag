@@ -2,7 +2,7 @@ import collections
 import hashlib
 import pathlib
 import re
-from typing import Any, Optional, BinaryIO, Dict, List, Set, NewType
+from typing import Any, Optional, Dict, List, Set, NewType
 import zlib
 
 from wyag.base import GitObjectTypeError, zlib_read
@@ -105,25 +105,6 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
             f.write(zlib.compress(result))
 
     return sha
-
-
-def object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] = None) -> str:
-    data = fd.read()
-
-    # Choose constructor depending on
-    # object type found in header
-    # if fmt == b'commit':
-    #     obj = GitCommit(repo, data)
-    # elif fmt == b'tree':
-    #     obj = GitTree(repo, data)
-    # elif fmt == b'tag':
-    #     obj = GitTag(repo, data)
-    if fmt == b'blob':
-        obj = GitBlob(repo, data)
-    else:
-        raise ValueError(f"Unknown type {fmt!s}!")
-
-    return object_write(obj, repo is not None)
 
 
 def kvlm_parse(raw: bytearray, start: int = 0, dct: Dict[bytes, List[bytes]] = None) -> Dict[bytes, List[bytes]]:
