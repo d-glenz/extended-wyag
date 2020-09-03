@@ -2,10 +2,11 @@ import argparse
 import pathlib
 
 from wyag.base import GitObjectTypeError
+from wyag.commit import object_find, commit_read
 from wyag.repository import GitRepository, repo_create, repo_find
-from wyag.objects import (object_find, log_graphviz,
-                          ref_list, tag_create, Sha, object_get_type, commit_read)
-from wyag.frontend import file_cat, generic_object_hash, generic_object_read
+from wyag.objects import ref_list, Sha, object_get_type
+from wyag.frontend import log_graphviz, file_cat, generic_object_hash, generic_object_read
+from wyag.tag import tag_create
 from wyag.trees import tree_checkout, tree_write, tree_read
 from wyag.refs import show_ref
 from wyag.index import read_index
@@ -21,9 +22,9 @@ def cmd_cat_file(args: argparse.Namespace) -> None:
         raise ValueError("Git repository not found!")
 
     if args.show_type:
-       obj = generic_object_read(repo, args.object)
-       print(obj.fmt.decode())
-       return
+        obj = generic_object_read(repo, args.object)
+        print(obj.fmt.decode())
+        return
 
     fmt = args.type.encode() if args.type else None
     file_cat(repo, args.object, fmt=fmt)

@@ -1,9 +1,10 @@
-from typing import Any, Optional, BinaryIO
+from typing import Any, Optional, BinaryIO, Set
 
 from wyag.base import zlib_read
 from wyag.repository import repo_file, GitRepository
-from wyag.objects import object_find, Sha, object_write
-from wyag.objects import GitObject, GitCommit, GitBlob, GitTag
+from wyag.objects import Sha, object_write, GitObject, GitBlob
+from wyag.commit import object_find, GitCommit, commit_read
+from wyag.tag import GitTag
 from wyag.trees import GitTree
 
 
@@ -59,3 +60,21 @@ def file_cat(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None
     obj = object_find(repo, obj, fmt=fmt)
     obj_content = generic_object_read(repo, obj)
     print(obj_content.pretty_print())
+
+
+def log_graphviz(repo: GitRepository, sha: Sha, seen: Set[str]) -> None:
+    if sha in seen:
+        return
+    seen.add(sha)
+
+    commit = commit_read(repo, sha)
+
+    if b'parent' not in commit.kvlm.keys():
+        # Base case: the initial commit.
+        return
+
+    parents = commit.kvlm[b'parent']
+
+    for p in parents:
+        print("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
+        log_graphviz(repo, Sha(p.decode("ascii")), seen)

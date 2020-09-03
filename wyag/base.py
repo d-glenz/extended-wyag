@@ -1,5 +1,9 @@
 import pathlib
+from typing import NewType
 import zlib
+
+
+Sha = NewType('Sha', str)
 
 
 class GitObjectTypeError(Exception):
