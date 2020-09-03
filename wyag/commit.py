@@ -2,7 +2,7 @@ import collections
 from typing import Any, Dict, List, Optional
 
 from wyag.base import Sha, zlib_read, GitObjectTypeError
-from wyag.objects import GitObject, object_resolve, object_get_type
+from wyag.objects import GitObject
 from wyag.repository import GitRepository, repo_file
 
 
@@ -111,39 +111,3 @@ def commit_read(repo: GitRepository, sha: Sha) -> GitCommit:
         raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
     return GitCommit(repo, raw[y+1:])
-
-
-def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> Optional[Sha]:
-    """Will resolve objects by full hash, short hash, tags, ..."""
-    all_shas = object_resolve(repo, name)
-
-    if not all_shas:
-        raise ValueError(f"No such reference: {name}")
-
-    if len(all_shas) > 1:
-        candidate_str = '\n'.join(all_shas)
-        raise ValueError(f"Ambiguous reference {name}: Candidates are:\n - {candidate_str}")
-
-    sha = all_shas[0]
-
-    if not fmt:
-        return Sha(sha)
-
-    while True:
-        obj_fmt = object_get_type(repo, Sha(sha))
-
-        if obj_fmt == fmt:
-            return Sha(sha)
-
-        if not follow:
-            return None
-
-        commit = commit_read(repo, Sha(sha))
-
-        # Follow tags
-        if obj_fmt == b'tag':
-            sha = commit.kvlm[b'object'][0].decode("ascii")
-        elif obj_fmt == b'commit' and fmt == b'tree':
-            sha = commit.kvlm[b'tree'][0].decode('ascii')
-        else:
-            return None

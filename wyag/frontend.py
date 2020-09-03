@@ -3,7 +3,8 @@ from typing import Any, Optional, BinaryIO, Set
 from wyag.base import zlib_read
 from wyag.repository import repo_file, GitRepository
 from wyag.objects import Sha, object_write, GitObject, GitBlob
-from wyag.commit import object_find, GitCommit, commit_read
+from wyag.commit import GitCommit, commit_read
+from wyag.finder import object_find
 from wyag.tag import GitTag
 from wyag.trees import GitTree
 
