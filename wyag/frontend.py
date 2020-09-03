@@ -55,8 +55,7 @@ def generic_object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] 
         raise ValueError(f"Unknown type {fmt!s}!")
 
 
-# TODO: function name inconsistent
-def cat_file(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
+def file_cat(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
     obj = object_find(repo, obj, fmt=fmt)
     obj_content = generic_object_read(repo, obj)
     print(obj_content.pretty_print())
