@@ -1,4 +1,5 @@
-from typing import Any, Optional, BinaryIO, Set
+import io
+from typing import Any, Optional, BinaryIO, Set, List
 
 from wyag.base import zlib_read
 from wyag.repository import repo_file, GitRepository
@@ -6,7 +7,8 @@ from wyag.objects import Sha, object_write, GitObject, GitBlob
 from wyag.commit import GitCommit, commit_read
 from wyag.finder import object_find
 from wyag.tag import GitTag
-from wyag.trees import GitTree
+from wyag.trees import GitTree, tree_hash
+from wyag.index import GitIndexEntry
 
 
 def generic_object_read(repo: GitRepository, sha: Sha) -> GitObject:
@@ -55,6 +57,19 @@ def generic_object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] 
         return object_write(GitBlob(repo, data), repo is not None)
     else:
         raise ValueError(f"Unknown type {fmt!s}!")
+
+
+def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
+    """Write a tree object from the current index entries."""
+    tree_entries = []
+
+    for entry in idx:
+        assert '/' not in entry.name, "currently only supports a single, top-level directory"
+
+        mode_path = bytes('{:o} {}'.format(entry.mode, entry.name).encode())
+        tree_entry = mode_path + b'\x00' + entry.obj
+        tree_entries.append(tree_entry)
+    return tree_hash(io.BytesIO(b''.join(tree_entries)), repo)
 
 
 def file_cat(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:

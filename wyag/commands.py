@@ -6,9 +6,9 @@ from wyag.commit import commit_read
 from wyag.finder import object_find
 from wyag.repository import GitRepository, repo_create, repo_find
 from wyag.objects import Sha, object_get_type
-from wyag.frontend import log_graphviz, file_cat, generic_object_hash, generic_object_read
+from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read
 from wyag.tag import tag_create
-from wyag.trees import tree_checkout, tree_write, tree_read
+from wyag.trees import tree_checkout, tree_read
 from wyag.refs import ref_list, show_ref
 from wyag.index import read_index
 
@@ -46,9 +46,9 @@ def cmd_log(args: argparse.Namespace) -> None:
     assert repo is not None, "Git repository not found"
 
     print("digraph wyaglog{")
-    git_object = object_find(repo, args.commit)
-    assert git_object is not None
-    log_graphviz(repo, git_object, set())
+    git_object_sha = object_find(repo, args.commit)
+    assert git_object_sha is not None
+    log_graphviz(repo, git_object_sha, set())
     print("}")
 
 
@@ -56,9 +56,9 @@ def cmd_ls_tree(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None, "Git repository not found"
 
-    obj = object_find(repo, args.object, fmt=b'tree')
-    assert obj is not None
-    obj_content = tree_read(repo, obj)
+    obj_sha = object_find(repo, args.object, fmt=b'tree')
+    assert obj_sha is not None
+    obj_content = tree_read(repo, obj_sha)
 
     for item in obj_content.items:
         mode = "0" * (6 - len(item.mode)) + item.mode.decode("ascii")
@@ -70,11 +70,11 @@ def cmd_checkout(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None, "Git repository not found"
 
-    obj = object_find(repo, args.commit)
-    assert obj is not None
+    obj_sha = object_find(repo, args.commit)
+    assert obj_sha is not None
 
     try:
-        commit_contents = commit_read(repo, obj)
+        commit_contents = commit_read(repo, obj_sha)
         tree_contents = tree_read(repo, Sha(commit_contents.kvlm[b'tree'][0].decode("ascii")))
     except GitObjectTypeError:
         raise ValueError(f"Cannot checkout {args.commit} since it's not a commit!")

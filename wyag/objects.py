@@ -1,5 +1,5 @@
 import hashlib
-from typing import Any, Optional
+from typing import Any, Optional, BinaryIO
 import zlib
 
 from wyag.base import GitObjectTypeError, zlib_read, Sha
@@ -99,3 +99,8 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
             f.write(zlib.compress(result))
 
     return sha
+
+
+def blob_hash(fd: BinaryIO, repo: Optional[GitRepository] = None) -> str:
+    data = fd.read()
+    return object_write(GitBlob(repo, data), repo is not None)
