@@ -20,6 +20,12 @@ initp.add_argument(
 
 catfilep = argsubparsers.add_parser("cat-file", help="Provide content of repository objects")
 catfilep.add_argument(
+    "-t",
+    dest="show_type",
+    action="store_true",
+    help="Instead of the content, show the object type identified by <object>",
+)
+catfilep.add_argument(
     "type",
     metavar="type",
     nargs='?',

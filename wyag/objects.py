@@ -218,12 +218,7 @@ def kvlm_serialize(kvlm: Dict[bytes, List[bytes]]) -> bytes:
             ret += k + b' ' + (v.replace(b'\n', b'\n ')) + b'\n'
 
     # Append message
-    message = kvlm[b'']
-    if isinstance(message, bytearray):
-        ret += b'\n' + b''.join(message)
-    else:
-        raise ValueError("message is List[bytes]")
-
+    ret += b'\n' + b''.join(kvlm[b''])
     return ret
 
 
