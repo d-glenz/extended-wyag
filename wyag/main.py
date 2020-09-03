@@ -3,4 +3,4 @@ import wyag.libwyag
 
 
 def main() -> None:
-    wyag.libwyag.main()
+    wyag.libwyag.subcommand_main()

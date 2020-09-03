@@ -1,11 +1,5 @@
 import argparse
-import collections  # noqa: F401
-import hashlib  # noqa: F401
-import os  # noqa: F401
-import re  # noqa: F401
 import sys
-from typing import List
-import zlib  # noqa: F401
 
 from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                            cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
@@ -116,8 +110,8 @@ commitp.add_argument("message",
 writetreep = argsubparsers.add_parser("write-tree", help="Create a tree object from the current index")
 
 
-def main(argv: List[str] = sys.argv[1:]) -> None:
-    args = argparser.parse_args(argv)
+def subcommand_main() -> None:
+    args = argparser.parse_args()
 
     command_dict = {
         # "add": cmd_add,

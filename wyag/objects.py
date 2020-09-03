@@ -65,7 +65,7 @@ def blob_read(repo: GitRepository, sha: Sha) -> GitBlob:
     if size != len(raw) - y - 1:
         raise ValueError(f"Malformed object {sha}: bad length")
 
-    if fmt != b'commit':
+    if fmt != b'blob':
         raise GitObjectTypeError(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
     return GitBlob(repo, raw[y+1:])
@@ -105,6 +105,53 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
             f.write(zlib.compress(result))
 
     return sha
+
+
+def object_resolve(repo: GitRepository, name: str) -> List[str]:
+    """Resolve name to an object hash in repo.
+
+       This function is aware of:
+        - the HEAD literal
+        - short and long hashes
+        - tags
+        - branches
+        - remote branches"""
+
+    candidates = []
+    hashRE = re.compile(r"^[0-9A-Fa-f]{40}$")
+    smallHashRE = re.compile(r"^[0-9A-Fa-f]{4,40}$")
+
+    # Empty string? Abort.
+    if not name.strip():
+        return []
+
+    if name == "HEAD":
+        return [ref_resolve(repo, "HEAD")]
+
+    if hashRE.match(name):
+        # This is a complete hash
+        return [name.lower()]
+    elif smallHashRE.match(name):
+        # This is a small hash. 4 seems to be the minimal length for git to
+        # consider something a short hash. This limit is documented in man
+        # git-rev-parse
+        name = name.lower()
+        prefix = name[:2]
+        path = repo_dir(repo, "objects", prefix, mkdir=False)
+        if path:
+            rem = name[2:]
+            for f in path.iterdir():
+                if str(f).startswith(rem):
+                    candidates.append(prefix + str(f))
+
+    # search for branches and tags (with or without "refs" and "heads" or "tags" prefixes)
+    for ref_path in [f'refs/heads/{name}', f'refs/tags/{name}', f'refs/{name}', name]:
+        ref = repo_file(repo, ref_path)
+        assert ref is not None
+        if ref.exists():
+            candidates.append(ref_resolve(repo, ref_path))
+
+    return candidates
 
 
 def kvlm_parse(raw: bytearray, start: int = 0, dct: Dict[bytes, List[bytes]] = None) -> Dict[bytes, List[bytes]]:
@@ -305,53 +352,6 @@ def ref_list(repo: GitRepository, path: str = None) -> Dict[str, Any]:
             ret[str(f)] = ref_resolve(repo, str(can))  # type: ignore
 
     return ret
-
-
-def object_resolve(repo: GitRepository, name: str) -> List[str]:
-    """Resolve name to an object hash in repo.
-
-       This function is aware of:
-        - the HEAD literal
-        - short and long hashes
-        - tags
-        - branches
-        - remote branches"""
-
-    candidates = []
-    hashRE = re.compile(r"^[0-9A-Fa-f]{40}$")
-    smallHashRE = re.compile(r"^[0-9A-Fa-f]{4,40}$")
-
-    # Empty string? Abort.
-    if not name.strip():
-        return []
-
-    if name == "HEAD":
-        return [ref_resolve(repo, "HEAD")]
-
-    if hashRE.match(name):
-        # This is a complete hash
-        return [name.lower()]
-    elif smallHashRE.match(name):
-        # This is a small hash. 4 seems to be the minimal length for git to
-        # consider something a short hash. This limit is documented in man
-        # git-rev-parse
-        name = name.lower()
-        prefix = name[:2]
-        path = repo_dir(repo, "objects", prefix, mkdir=False)
-        if path:
-            rem = name[2:]
-            for f in path.iterdir():
-                if str(f).startswith(rem):
-                    candidates.append(prefix + str(f))
-
-    # search for branches and tags (with or without "refs" and "heads" or "tags" prefixes)
-    for ref_path in [f'refs/heads/{name}', f'refs/tags/{name}', f'refs/{name}', name]:
-        ref = repo_file(repo, ref_path)
-        assert ref is not None
-        if ref.exists():
-            candidates.append(ref_resolve(repo, ref_path))
-
-    return candidates
 
 
 def object_find(repo: GitRepository, name: str, fmt: Optional[bytes] = None, follow: bool = True) -> Optional[Sha]:
