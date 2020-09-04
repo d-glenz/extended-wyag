@@ -3,7 +3,7 @@ import sys
 
 from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                            cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
-                           cmd_write_tree)
+                           cmd_write_tree, cmd_add)
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
@@ -115,12 +115,17 @@ commitp.add_argument("message",
 
 writetreep = argsubparsers.add_parser("write-tree", help="Create a tree object from the current index")
 
+addp = argsubparsers.add_parser("add", help="Add file contents to the index")
+addp.add_argument("paths",
+                  nargs='+',
+                  help="Add file contents to the index")
+
 
 def subcommand_main() -> None:
     args = argparser.parse_args()
 
     command_dict = {
-        # "add": cmd_add,
+        "add": cmd_add,
         "cat-file": cmd_cat_file,
         "checkout": cmd_checkout,
         "commit": cmd_commit,

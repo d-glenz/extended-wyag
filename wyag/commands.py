@@ -10,7 +10,7 @@ from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_has
 from wyag.tag import tag_create
 from wyag.trees import tree_checkout, tree_read
 from wyag.refs import ref_list, show_ref
-from wyag.index import read_index
+from wyag.index import read_index, add_all
 
 
 def cmd_init(args: argparse.Namespace) -> None:
@@ -137,3 +137,8 @@ def cmd_write_tree(args: argparse.Namespace) -> None:
     assert repo is not None
     sha_of_tree = tree_write(repo, idx)
     print(sha_of_tree)
+
+
+def cmd_add(args: argparse.Namespace) -> None:
+    all_paths = [pathlib.Path(path) for path in args.paths]
+    add_all(all_paths)

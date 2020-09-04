@@ -211,6 +211,10 @@ def add_all(paths: List[pathlib.Path]) -> None:
     all_entries = read_index()
     entries = [e for e in all_entries if e.name not in paths]
     for path in paths:
-        entries.append(add_path(path))
+        if path.is_dir():
+            for subpath in path.rglob('*'):
+                entries.append(add_path(subpath))
+        else:
+            entries.append(add_path(path))
     entries.sort(key=operator.attrgetter('name'))
     write_index(entries)
