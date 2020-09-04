@@ -170,6 +170,10 @@ def write_index(entries: List[GitIndexEntry]) -> None:
        https://github.com/benhoyt/pygit/blob/master/pygit.py"""
     packed_entries = []
     for entry in entries:
+        # print(f"{type(entry.ctime[0])}:{entry.ctime[0]}, {type(entry.ctime[1])}:{entry.ctime[1]}, {type(entry.mtime[0])}:{entry.mtime[0]},"
+        #       f"{type(entry.mtime[1])}:{entry.mtime[1]}, {type(entry.dev)}:{entry.dev}, {type(entry.ino)}:{entry.ino}, "
+        #       f"{type(entry.mode)}:{entry.mode}, {type(entry.uid)}:{entry.uid}, {type(entry.gid)}:{entry.gid},"
+        #       f"{type(entry.size)}:{entry.size}, {type(entry.obj)}:{entry.obj}, {type(entry.flags)}:{entry.flags}")
         entry_head = struct.pack(
                 "!LLLLLLLLLL20sH",
                 entry.ctime[0], entry.ctime[1], entry.mtime[0], entry.mtime[1],
@@ -194,8 +198,8 @@ def add_path(path: pathlib.Path) -> GitIndexEntry:
     st = path.stat()
     flags = len(str(path).encode())
     assert flags < (1 << 12)
-    entry = GitIndexEntry(int(st.st_ctime), st.st_ctime_ns, int(st.st_mtime), st.st_mtime_ns, st.st_dev,
-                          st.st_ino, st.st_mode, st.st_uid, st.st_gid, st.st_size, bytes.fromhex(sha1),
+    entry = GitIndexEntry(int(st.st_ctime), st.st_ctime_ns%1000000000, int(st.st_mtime), st.st_mtime_ns%1000000000,
+                          st.st_dev, st.st_ino, st.st_mode, st.st_uid, st.st_gid, st.st_size, bytes.fromhex(sha1),
                           flags, str(path))
     return entry
 
@@ -208,5 +212,5 @@ def add_all(paths: List[pathlib.Path]) -> None:
     entries = [e for e in all_entries if e.name not in paths]
     for path in paths:
         entries.append(add_path(path))
-    entries.sort(key=operator.attrgetter('path'))
+    entries.sort(key=operator.attrgetter('name'))
     write_index(entries)
