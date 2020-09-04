@@ -110,6 +110,7 @@ def author_timestamp() -> str:
 
 
 def commit(author: str, message: str) -> str:
+    """https://benhoyt.com/writings/pygit/"""
     index = read_index()
     if len(index) == 0:
         raise ValueError("nothing to commit")

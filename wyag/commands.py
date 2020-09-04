@@ -4,7 +4,7 @@ import pathlib
 from wyag.base import GitObjectTypeError
 from wyag.commit import commit_read
 from wyag.finder import object_find
-from wyag.repository import GitRepository, repo_create, repo_find
+from wyag.repository import GitRepository, repo_create, repo_find, repo_path
 from wyag.objects import Sha, object_get_type
 from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read, commit
 from wyag.tag import tag_create
@@ -138,5 +138,10 @@ def cmd_write_tree(args: argparse.Namespace) -> None:
 
 
 def cmd_add(args: argparse.Namespace) -> None:
-    all_paths = [pathlib.Path(path) for path in args.paths]
+    if args.all:
+        repo = repo_find()
+        assert repo is not None
+        all_paths = [repo_path(repo, '.').parent]
+    else:
+        all_paths = [pathlib.Path(path) for path in args.paths]
     add_all(all_paths)

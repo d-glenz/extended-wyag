@@ -42,6 +42,7 @@ def repo_file(repo: GitRepository, *path: str,
        .git/refs/remotes/origin."""
 
     if repo_dir(repo, *path[:-1], mkdir=mkdir):
+        print(f"Path({'/'.join(path)})")
         return repo_path(repo, *path)
 
     return None
@@ -92,21 +93,18 @@ def repo_create(path: str) -> GitRepository:
     # .git/description
     desc_f = repo_file(repo, "description")
     if desc_f:
-        print(f"desc_f={desc_f}")
         with open(str(desc_f), "w") as f:
             f.write("Unnamed repository: edit this file 'description' to name the repository.\n")
 
     # .git/HEAD
     head_f = repo_file(repo, "HEAD")
     if head_f:
-        print(f"head_f={head_f}")
         with open(str(head_f), "w") as f:
             f.write("ref: refs/heads/master\n")
 
     # .git/config
     cfg_f = repo_file(repo, "config")
     if cfg_f:
-        print(f"cfg_f={cfg_f}")
         with open(str(cfg_f), "w") as f:
             config = repo_default_config()
             config.write(f)

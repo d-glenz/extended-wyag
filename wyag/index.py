@@ -207,11 +207,20 @@ def add_all(paths: List[pathlib.Path]) -> None:
     all_entries = read_index()
     entries = [e for e in all_entries if e.name not in paths]
     for path in paths:
+        print(f"add_all - path {path}")
         if path.is_dir():
-            for subpath in path.rglob('*'):
-                if not subpath.is_dir():
-                    entries.append(add_path(subpath))
+            if not path.parts:
+                print(f"Path {path} appears to be cwd")
+                continue
+            if not str(path.parts[-1]).startswith('.'):
+                for subpath in path.rglob('*'):
+                    print(f"add_all subpath: {subpath}")
+                    if not subpath.is_dir():
+                        entries.append(add_path(subpath))
+            else:
+                print(f"not adding {path} because {path.parts[-1]} starts with '.'")
         else:
+            print(f"add_all path not_dir: {path}")
             entries.append(add_path(path))
     entries.sort(key=operator.attrgetter('name'))
     write_index(entries)

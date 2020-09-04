@@ -123,8 +123,14 @@ writetreep = argsubparsers.add_parser("write-tree", help="Create a tree object f
 
 addp = argsubparsers.add_parser("add", help="Add file contents to the index")
 addp.add_argument("paths",
-                  nargs='+',
+                  nargs='*',
                   help="Add file contents to the index")
+
+addp.add_argument('-A',
+                  dest='all',
+                  action="store_true",
+                  help=("Update the index not only where the working tree has a file matching <pathspec> "
+                        "but also where the index already has an entry."))
 
 
 def subcommand_main() -> None:
