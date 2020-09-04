@@ -128,7 +128,7 @@ def read_index() -> List[GitIndexEntry]:
     try:
         data = open(str(repo_path(repo, "index")), 'rb').read()
     except FileNotFoundError:
-        print("File .git/index not found!")
+        # print("File .git/index not found!")
         return []
 
     digest = hashlib.sha1(data[:-20]).digest()
@@ -194,7 +194,7 @@ def write_index(entries: List[GitIndexEntry]) -> None:
 
 def add_path(path: pathlib.Path) -> GitIndexEntry:
     """https://github.com/benhoyt/pygit/blob/master/pygit.py"""
-    sha1 = hash_object(path, write=False, fmt='blob')
+    sha1 = hash_object(path, write=True, fmt='blob')
     st = path.stat()
     flags = len(str(path).encode())
     assert flags < (1 << 12)
@@ -213,7 +213,8 @@ def add_all(paths: List[pathlib.Path]) -> None:
     for path in paths:
         if path.is_dir():
             for subpath in path.rglob('*'):
-                entries.append(add_path(subpath))
+                if not subpath.is_dir():
+                    entries.append(add_path(subpath))
         else:
             entries.append(add_path(path))
     entries.sort(key=operator.attrgetter('name'))

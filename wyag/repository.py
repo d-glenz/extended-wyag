@@ -1,7 +1,7 @@
 import configparser
 import pathlib
 
-from typing import Optional
+from typing import Any, Optional
 
 
 class GitRepository:
@@ -150,3 +150,10 @@ def repo_find(path: str = '.', required: bool = True) -> Optional[GitRepository]
         return None
 
     return repo_find(str(parent), required)
+
+
+
+def write_file(path: str, data: Any) -> None:
+     """Write data bytes to file at given path."""
+     with open(path, 'wb') as f:
+         f.write(data)

@@ -60,7 +60,8 @@ def generic_object_hash(fd: BinaryIO, fmt: bytes, repo: Optional[GitRepository] 
 
 
 def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
-    """Write a tree object from the current index entries."""
+    """Write a tree object from the current index entries.
+       https://github.com/benhoyt/pygit/blob/master/pygit.py"""
     tree_entries = []
 
     for entry in idx:

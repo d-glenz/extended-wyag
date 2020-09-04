@@ -26,6 +26,12 @@ catfilep.add_argument(
     help="Instead of the content, show the object type identified by <object>",
 )
 catfilep.add_argument(
+    "-p",
+    dest="pretty_print",
+    action="store_true",
+    help="Instead of the content, show the object type identified by <object>",
+)
+catfilep.add_argument(
     "type",
     metavar="type",
     nargs='?',
