@@ -92,7 +92,7 @@ def object_write(obj: GitObject, actually_write: bool = True) -> str:
         if obj.repo is None:
             raise ValueError("repo is None on actually_write in object_write")
         # Compute path
-        path = repo_file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=True)
+        path = repo_file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=True, write=True)
 
         with open(str(path), "wb") as f:
             # Compress and write

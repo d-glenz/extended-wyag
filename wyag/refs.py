@@ -17,7 +17,7 @@ def show_ref(repo: GitRepository, refs: Dict[str, str], with_hash: bool = True, 
 
 
 def ref_create(repo: GitRepository, ref_name: str, sha: str) -> None:
-    with open(str(repo_file(repo, "refs/" + ref_name)), "w") as fp:
+    with open(str(repo_file(repo, "refs/" + ref_name, write=True)), "w") as fp:
         fp.write(sha + '\n')
 
 

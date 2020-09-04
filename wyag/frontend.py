@@ -118,7 +118,7 @@ def commit(author: str, message: str) -> str:
     repo = repo_find()
     assert repo is not None
     try:
-        with open(str(repo_path(repo, "refs", "heads", "master")), "r") as f:
+        with open(str(repo_file(repo, "refs", "heads", "master")), "r") as f:
             parent: Optional[str] = f.read().strip()
     except FileNotFoundError:
         print("No prior commits")
@@ -136,6 +136,6 @@ def commit(author: str, message: str) -> str:
             '']
     data = '\n'.join(lines).encode()
     sha1 = generic_object_hash(io.BytesIO(data), b"commit", repo)
-    master_path = repo_file(repo, "refs", "heads", "master")
+    master_path = repo_file(repo, "refs", "heads", "master", write=True)
     write_file(str(master_path), (sha1 + "\n").encode())
     return sha1

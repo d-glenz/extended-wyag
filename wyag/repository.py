@@ -35,14 +35,14 @@ def repo_path(repo: GitRepository, *path: str) -> pathlib.Path:
     return repo.gitdir.joinpath(*path)
 
 
-def repo_file(repo: GitRepository, *path: str,
+def repo_file(repo: GitRepository, *path: str, write: bool = False,
               mkdir: bool = False) -> Optional[pathlib.Path]:
     """Same as repo_path, but create dirname(*path) if absent. For
        example, repo_file(r, "refs", "remotes", "origin", "HEAD") will create
        .git/refs/remotes/origin."""
 
     if repo_dir(repo, *path[:-1], mkdir=mkdir):
-        print(f"Path({'/'.join(path)})")
+        print(f"Path({'/'.join(path)}{', w=T' if write else ''})")
         return repo_path(repo, *path)
 
     return None
@@ -91,19 +91,19 @@ def repo_create(path: str) -> GitRepository:
     assert(repo_dir(repo, "refs", "heads", mkdir=True))
 
     # .git/description
-    desc_f = repo_file(repo, "description")
+    desc_f = repo_file(repo, "description", write=True)
     if desc_f:
         with open(str(desc_f), "w") as f:
             f.write("Unnamed repository: edit this file 'description' to name the repository.\n")
 
     # .git/HEAD
-    head_f = repo_file(repo, "HEAD")
+    head_f = repo_file(repo, "HEAD", write=True)
     if head_f:
         with open(str(head_f), "w") as f:
             f.write("ref: refs/heads/master\n")
 
     # .git/config
-    cfg_f = repo_file(repo, "config")
+    cfg_f = repo_file(repo, "config", write=True)
     if cfg_f:
         with open(str(cfg_f), "w") as f:
             config = repo_default_config()

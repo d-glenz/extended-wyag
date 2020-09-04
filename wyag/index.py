@@ -184,7 +184,7 @@ def write_index(entries: List[GitIndexEntry]) -> None:
     digest = hashlib.sha1(all_data).digest()
     repo = repo_find()
     assert repo is not None
-    with open(str(repo_file(repo, 'index')), "wb") as f:
+    with open(str(repo_file(repo, 'index', write=True)), "wb") as f:
         f.write(all_data + digest)
 
 
