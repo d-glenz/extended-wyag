@@ -1,18 +1,16 @@
 import argparse
-import io
 import pathlib
-import time
 
 from wyag.base import GitObjectTypeError
 from wyag.commit import commit_read
 from wyag.finder import object_find
-from wyag.repository import GitRepository, repo_create, repo_find, repo_path, repo_file, write_file
+from wyag.repository import GitRepository, repo_create, repo_find
 from wyag.objects import Sha, object_get_type
-from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read
+from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read, commit
 from wyag.tag import tag_create
 from wyag.trees import tree_checkout, tree_read
 from wyag.refs import ref_list, show_ref
-from wyag.index import read_index, add_all, hash_object
+from wyag.index import read_index, add_all
 
 
 def cmd_init(args: argparse.Namespace) -> None:
@@ -127,40 +125,8 @@ def cmd_rev_parse(args: argparse.Namespace) -> None:
 
 
 def cmd_commit(args: argparse.Namespace) -> None:
-    index = read_index()
-    if len(index) == 0:
-        raise ValueError("nothing to commit")
-
-    repo = repo_find()
-    assert repo is not None
-    try:
-        with open(str(repo_path(repo, "refs", "heads", "master")), "r") as f:
-            parent = f.read()
-    except FileNotFoundError:
-        print("No prior commits")
-        parent = None
-    sha_of_tree = tree_write(repo, index)
-    lines = [f"tree {sha_of_tree}"]
-    if parent:
-        lines.append(f"parent: {parent}")
-    timestamp = int(time.mktime(time.localtime()))
-    utc_offset = -time.timezone
-    author_time = '{} {}{:02}{:02}'.format(
-        timestamp,
-        '+' if utc_offset > 0 else '-',
-        abs(utc_offset) // 3600,
-        (abs(utc_offset) // 60) % 60)
-    lines.append(f"author {args.author} {author_time}")
-    lines.append(f"committer {args.author} {author_time}")
-    lines.append('')
-    lines.append(args.message)
-    lines.append('')
-    data = '\n'.join(lines).encode()
-    sha1 = generic_object_hash(io.BytesIO(data), b"commit", repo)
-    master_path = repo_file(repo, "refs", "heads", "master")
-    write_file(str(master_path), (sha1 + "\n").encode())
+    sha1 = commit(args.author, args.message)
     print(sha1)
-
 
 
 def cmd_write_tree(args: argparse.Namespace) -> None:

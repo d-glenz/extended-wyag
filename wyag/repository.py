@@ -78,7 +78,8 @@ def repo_create(path: str) -> GitRepository:
         if not repo.worktree.is_dir():
             raise ValueError(f"{path} is not a directory!")
         if list(repo.worktree.iterdir()):
-            raise ValueError(f"{path} is not empty!")
+            # raise ValueError(f"{path} is not empty!")
+            pass
     else:
         print(f"Path('{repo.worktree}').mkdir(parents=True)")
         repo.worktree.mkdir(parents=True)
@@ -152,8 +153,7 @@ def repo_find(path: str = '.', required: bool = True) -> Optional[GitRepository]
     return repo_find(str(parent), required)
 
 
-
 def write_file(path: str, data: Any) -> None:
-     """Write data bytes to file at given path."""
-     with open(path, 'wb') as f:
-         f.write(data)
+    """Write data bytes to file at given path."""
+    with open(path, 'wb') as f:
+        f.write(data)
