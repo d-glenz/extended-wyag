@@ -13,6 +13,8 @@ from wyag.objects import blob_hash
 
 
 _LOG = logging.getLogger('wyag.index')
+HEADER_FORMAT = '!4sLL'
+ENTRY_FORMAT = "!LLLLLLLLLL20sH"
 
 
 class ModeTypes(Enum):
@@ -138,7 +140,7 @@ def read_index() -> List[GitIndexEntry]:
     digest = hashlib.sha1(data[:-20]).digest()
     assert digest == data[-20:], 'invalid index checksum'
 
-    signature, version, num_entries = struct.unpack('!4sLL', data[:12])
+    signature, version, num_entries = struct.unpack(HEADER_FORMAT, data[:12])
     assert signature == b'DIRC', \
         'invalid index signature {}'.format(signature)
     assert version == 2, 'unknown index version {}'.format(version)
@@ -149,7 +151,7 @@ def read_index() -> List[GitIndexEntry]:
 
     while i + 62 < len(entry_data):
         fields_end = i + 62
-        fields = struct.unpack('!LLLLLLLLLL20sH', entry_data[i:fields_end])
+        fields = struct.unpack(ENTRY_FORMAT, entry_data[i:fields_end])
         path_end = entry_data.index(b'\x00', fields_end)
         path = entry_data[fields_end:path_end]
         entries.append(GitIndexEntry(*(fields + (path.decode(),))))
@@ -175,7 +177,7 @@ def write_index(entries: List[GitIndexEntry]) -> None:
     packed_entries = []
     for entry in entries:
         entry_head = struct.pack(
-                "!LLLLLLLLLL20sH",
+                ENTRY_FORMAT,
                 entry.ctime[0], entry.ctime[1], entry.mtime[0], entry.mtime[1],
                 entry.dev, entry.ino, entry.mode, entry.uid, entry.gid,
                 entry.size, entry.obj, entry.flags)
@@ -183,7 +185,7 @@ def write_index(entries: List[GitIndexEntry]) -> None:
         length = ((62 + len(path) + 8) // 8) * 8
         packed_entry = entry_head + path + b'\x00' * (length - 62 - len(path))
         packed_entries.append(packed_entry)
-    header = struct.pack('!4sLL', b'DIRC', 2, len(entries))
+    header = struct.pack(HEADER_FORMAT, b'DIRC', 2, len(entries))
     all_data = header + b''.join(packed_entries)
     digest = hashlib.sha1(all_data).digest()
     repo = repo_find()

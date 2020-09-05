@@ -142,7 +142,7 @@ addp.add_argument('-A',
 def subcommand_main() -> None:
     args = argparser.parse_args()
 
-    _LOG.addHandler(logging.StreamHandler())
+    _LOG.addHandler(logging.StreamHandler(sys.stdout))
     if args.debug:
         _LOG.setLevel(logging.DEBUG)
     else:
