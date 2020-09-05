@@ -1,4 +1,5 @@
 import argparse
+import logging
 import pathlib
 
 from wyag.base import GitObjectTypeError
@@ -13,6 +14,9 @@ from wyag.refs import ref_list, show_ref
 from wyag.index import read_index, add_all
 
 
+_LOG = logging.getLogger('wyag.commands')
+
+
 def cmd_init(args: argparse.Namespace) -> None:
     repo_create(args.path)
 
@@ -24,7 +28,7 @@ def cmd_cat_file(args: argparse.Namespace) -> None:
 
     if args.show_type:
         obj = generic_object_read(repo, args.object)
-        print(obj.fmt.decode())
+        _LOG.info(obj.fmt.decode())
         return
 
     if args.pretty_print or args.type:
@@ -39,18 +43,18 @@ def cmd_hash_object(args: argparse.Namespace) -> None:
             sha = generic_object_hash(fd, args.type.encode(), GitRepository("."))
         else:
             sha = generic_object_hash(fd, args.type.encode(), None)
-        print(sha)
+        _LOG.info(sha)
 
 
 def cmd_log(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None, "Git repository not found"
 
-    print("digraph wyaglog{")
+    _LOG.info("digraph wyaglog{")
     git_object_sha = object_find(repo, args.commit)
     assert git_object_sha is not None
     log_graphviz(repo, git_object_sha, set())
-    print("}")
+    _LOG.info("}")
 
 
 def cmd_ls_tree(args: argparse.Namespace) -> None:
@@ -64,7 +68,7 @@ def cmd_ls_tree(args: argparse.Namespace) -> None:
     for item in obj_content.items:
         mode = "0" * (6 - len(item.mode)) + item.mode.decode("ascii")
         fmt = object_get_type(repo, item.sha).decode("ascii")
-        print(f"{mode} {fmt} {item.sha}\t{item.path.decode('ascii')}")
+        _LOG.info(f"{mode} {fmt} {item.sha}\t{item.path.decode('ascii')}")
 
 
 def cmd_checkout(args: argparse.Namespace) -> None:
@@ -121,12 +125,12 @@ def cmd_rev_parse(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None
 
-    print(object_find(repo, args.name, fmt, follow=True))
+    _LOG.info(object_find(repo, args.name, fmt, follow=True))
 
 
 def cmd_commit(args: argparse.Namespace) -> None:
     sha1 = commit(args.author, args.message)
-    print(sha1)
+    _LOG.info(sha1)
 
 
 def cmd_write_tree(args: argparse.Namespace) -> None:
@@ -134,7 +138,7 @@ def cmd_write_tree(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None
     sha_of_tree = tree_write(repo, idx)
-    print(sha_of_tree)
+    _LOG.info(sha_of_tree)
 
 
 def cmd_add(args: argparse.Namespace) -> None:

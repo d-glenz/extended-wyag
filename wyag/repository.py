@@ -1,7 +1,11 @@
 import configparser
+import logging
 import pathlib
 
 from typing import Any, Optional
+
+
+_LOG = logging.getLogger('wyag.repository')
 
 
 class GitRepository:
@@ -42,7 +46,7 @@ def repo_file(repo: GitRepository, *path: str, write: bool = False,
        .git/refs/remotes/origin."""
 
     if repo_dir(repo, *path[:-1], mkdir=mkdir):
-        print(f"Path({'/'.join(path)}{', w=T' if write else ''})")
+        _LOG.debug(f"Path({'/'.join(path)}{', w=T' if write else ''})")
         return repo_path(repo, *path)
 
     return None
@@ -60,7 +64,7 @@ def repo_dir(repo: GitRepository, *path: str,
         raise ValueError(f"Not a directory {rpath}")
 
     if mkdir:
-        print(f"Path('{rpath}').mkdir(parents=True)")
+        _LOG.debug(f"Path('{rpath}').mkdir(parents=True)")
         rpath.mkdir(parents=True)
         return rpath
 
@@ -82,7 +86,7 @@ def repo_create(path: str) -> GitRepository:
             # raise ValueError(f"{path} is not empty!")
             pass
     else:
-        print(f"Path('{repo.worktree}').mkdir(parents=True)")
+        _LOG.debug(f"Path('{repo.worktree}').mkdir(parents=True)")
         repo.worktree.mkdir(parents=True)
 
     assert(repo_dir(repo, "branches", mkdir=True))

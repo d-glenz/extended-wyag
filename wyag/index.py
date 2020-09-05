@@ -1,6 +1,7 @@
 import binascii
 from enum import Enum
 import operator
+import logging
 import hashlib
 import pathlib
 import stat
@@ -9,6 +10,9 @@ from typing import List
 
 from wyag.repository import repo_path, repo_find, repo_file, GitRepository
 from wyag.objects import blob_hash
+
+
+_LOG = logging.getLogger('wyag.index')
 
 
 class ModeTypes(Enum):
@@ -128,7 +132,7 @@ def read_index() -> List[GitIndexEntry]:
     try:
         data = open(str(repo_path(repo, "index")), 'rb').read()
     except FileNotFoundError:
-        # print("File .git/index not found!")
+        _LOG.debug("File .git/index not found!")
         return []
 
     digest = hashlib.sha1(data[:-20]).digest()
@@ -207,20 +211,20 @@ def add_all(paths: List[pathlib.Path]) -> None:
     all_entries = read_index()
     entries = [e for e in all_entries if e.name not in paths]
     for path in paths:
-        print(f"add_all - path {path}")
+        _LOG.debug(f"add_all - path {path}")
         if path.is_dir():
             if not path.parts:
-                print(f"Path {path} appears to be cwd")
+                _LOG.debug(f"Path {path} appears to be cwd")
                 continue
             if not str(path.parts[-1]).startswith('.'):
                 for subpath in path.rglob('*'):
-                    print(f"add_all subpath: {subpath}")
+                    _LOG.debug(f"add_all subpath: {subpath}")
                     if not subpath.is_dir():
                         entries.append(add_path(subpath))
             else:
-                print(f"not adding {path} because {path.parts[-1]} starts with '.'")
+                _LOG.debug(f"not adding {path} because {path.parts[-1]} starts with '.'")
         else:
-            print(f"add_all path not_dir: {path}")
+            _LOG.debug(f"add_all path not_dir: {path}")
             entries.append(add_path(path))
     entries.sort(key=operator.attrgetter('name'))
     write_index(entries)

@@ -1,11 +1,17 @@
 import argparse
+import logging
 import sys
 
 from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                            cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
                            cmd_write_tree, cmd_add)
 
+
+_LOG = logging.getLogger('wyag')
+
+
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
+argparser.add_argument('--debug', action='store_true')
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
 argsubparsers.required = True
 
@@ -136,6 +142,12 @@ addp.add_argument('-A',
 def subcommand_main() -> None:
     args = argparser.parse_args()
 
+    _LOG.addHandler(logging.StreamHandler())
+    if args.debug:
+        _LOG.setLevel(logging.DEBUG)
+    else:
+        _LOG.setLevel(logging.INFO)
+
     command_dict = {
         "add": cmd_add,
         "cat-file": cmd_cat_file,
@@ -158,4 +170,4 @@ def subcommand_main() -> None:
         target_function = command_dict[args.command]
         target_function(args)
     except KeyError:
-        print(f"wyag: '{args.command}' is not a wyag command. See 'wyag --help'.", file=sys.stderr)
+        _LOG.warning(f"wyag: '{args.command}' is not a wyag command. See 'wyag --help'.", file=sys.stderr)

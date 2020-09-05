@@ -1,4 +1,5 @@
 import io
+import logging
 import time
 from typing import Any, Optional, BinaryIO, Set, List
 
@@ -10,6 +11,9 @@ from wyag.finder import object_find
 from wyag.tag import GitTag
 from wyag.trees import GitTree, tree_hash
 from wyag.index import GitIndexEntry, read_index
+
+
+_LOG = logging.getLogger('wyag.frontend')
 
 
 def generic_object_read(repo: GitRepository, sha: Sha) -> GitObject:
@@ -77,7 +81,7 @@ def tree_write(repo: GitRepository, idx: List[GitIndexEntry]) -> str:
 def file_cat(repo: GitRepository, obj: Any, fmt: Optional[bytes] = None) -> None:
     obj = object_find(repo, obj, fmt=fmt)
     obj_content = generic_object_read(repo, obj)
-    print(obj_content.pretty_print())
+    _LOG.info(obj_content.pretty_print())
 
 
 def log_graphviz(repo: GitRepository, sha: Sha, seen: Set[str]) -> None:
@@ -94,7 +98,7 @@ def log_graphviz(repo: GitRepository, sha: Sha, seen: Set[str]) -> None:
     parents = commit.kvlm[b'parent']
 
     for p in parents:
-        print("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
+        _LOG.info("c_{0} -> c_{1};".format(sha, p.decode("ascii")))
         log_graphviz(repo, Sha(p.decode("ascii")), seen)
 
 
@@ -121,7 +125,7 @@ def commit(author: str, message: str) -> str:
         with open(str(repo_file(repo, "refs", "heads", "master")), "r") as f:
             parent: Optional[str] = f.read().strip()
     except FileNotFoundError:
-        print("No prior commits")
+        _LOG.debug("No prior commits")
         parent = None
     sha_of_tree = tree_write(repo, index)
     lines = [f"tree {sha_of_tree}"]
