@@ -11,7 +11,7 @@ from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_has
 from wyag.tag import tag_create
 from wyag.trees import tree_checkout, tree_read
 from wyag.refs import ref_list, show_ref
-from wyag.index import read_index, add_all
+from wyag.index import read_index, add_all, add_path, write_index
 
 
 _LOG = logging.getLogger('wyag.commands')
@@ -37,13 +37,8 @@ def cmd_cat_file(args: argparse.Namespace) -> None:
 
 
 def cmd_hash_object(args: argparse.Namespace) -> None:
-
-    with open(args.path, "rb") as fd:
-        if args.write:
-            sha = generic_object_hash(fd, args.type.encode(), GitRepository("."))
-        else:
-            sha = generic_object_hash(fd, args.type.encode(), None)
-        _LOG.info(sha)
+    sha = generic_object_hash(open(args.path, "rb"), args.type.encode(), GitRepository(".") if args.write else None)
+    _LOG.info(sha)
 
 
 def cmd_log(args: argparse.Namespace) -> None:
@@ -141,6 +136,13 @@ def cmd_write_tree(args: argparse.Namespace) -> None:
     _LOG.info(sha_of_tree)
 
 
+def cmd_ls_files(args: argparse.Namespace) -> None:
+    if args.stage:
+        idx = read_index()
+        for entry in idx:
+            print(f"{entry.mode:o} {entry.hex_sha} {entry.flag_stage}\t{entry.name}")
+
+
 def cmd_add(args: argparse.Namespace) -> None:
     if args.all:
         repo = repo_find()
@@ -149,3 +151,8 @@ def cmd_add(args: argparse.Namespace) -> None:
     else:
         all_paths = [pathlib.Path(path) for path in args.paths]
     add_all(all_paths)
+
+
+def cmd_update_index(args: argparse.Namespace) -> None:
+    if args.add:
+        cmd_add(args)

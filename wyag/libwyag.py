@@ -4,7 +4,7 @@ import sys
 
 from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                            cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
-                           cmd_write_tree, cmd_add)
+                           cmd_write_tree, cmd_add, cmd_ls_files, cmd_update_index)
 
 
 _LOG = logging.getLogger('wyag')
@@ -139,6 +139,14 @@ addp.add_argument('-A',
                         "but also where the index already has an entry."))
 
 
+updateindexp = argsubparsers.add_parser("update-index", help="Modifies the index or directory cache.")
+updateindexp.add_argument("--add", action="store_true", help="If a specified file isn’t in the index already then it’s added.")
+updateindexp.add_argument("paths", nargs="+", help="Files to act on.")
+
+
+lsfilesp = argsubparsers.add_parser("ls-files", help="Show information about files in the index and the working tree.")
+lsfilesp.add_argument("--stage", "-s", action="store_true", help="Show staged contents' object name, mode bits and stage number in the output.")
+
 def subcommand_main() -> None:
     args = argparser.parse_args()
 
@@ -157,12 +165,14 @@ def subcommand_main() -> None:
         "init": cmd_init,
         "log": cmd_log,
         "ls-tree": cmd_ls_tree,
+        "ls-files": cmd_ls_files,
         # "merge": cmd_merge,
         # "rebase": cmd_rebase,
         "rev-parse": cmd_rev_parse,
         # "rm": cmd_rm,
         "show-ref": cmd_show_ref,
         "tag": cmd_tag,
+        "update-index": cmd_update_index,
         "write-tree": cmd_write_tree,
     }
 

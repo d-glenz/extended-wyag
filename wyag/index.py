@@ -56,7 +56,7 @@ class GitIndexEntry:
         self.flags = flags
         # self.flag_assume_valid = flag_assume_valid
         # self.flag_extended = flag_extended
-        # self.flag_stage = flag_stage
+        self.flag_stage = (flags & int("0011000000000000", 2)) >> (4*3)
         # self.flag_name_length = flag_name_length """Length of the name if < 0xFFF (yes, three Fs), -1 otherwise"""
 
         self.name = path
