@@ -127,7 +127,11 @@ def commit(author: str, message: str) -> str:
     except FileNotFoundError:
         _LOG.debug("No prior commits")
         parent = None
+
+    # git write-tree
     sha_of_tree = tree_write(repo, index)
+
+    # git commit-tree
     lines = [f"tree {sha_of_tree}"]
     if parent:
         lines.append(f"parent {parent}")
@@ -140,6 +144,8 @@ def commit(author: str, message: str) -> str:
             '']
     data = '\n'.join(lines).encode()
     sha1 = generic_object_hash(io.BytesIO(data), b"commit", repo)
+
+    # git update-ref
     master_path = repo_file(repo, "refs", "heads", "master", write=True)
     write_file(str(master_path), (sha1 + "\n").encode())
     return sha1

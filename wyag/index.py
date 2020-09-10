@@ -222,6 +222,7 @@ def add_all(paths: List[pathlib.Path]) -> None:
                 for subpath in path.rglob('*'):
                     _LOG.debug(f"add_all subpath: {subpath}")
                     if not subpath.is_dir():
+                        # git hash-object
                         entries.append(add_path(subpath))
             else:
                 _LOG.debug(f"not adding {path} because {path.parts[-1]} starts with '.'")
@@ -229,4 +230,5 @@ def add_all(paths: List[pathlib.Path]) -> None:
             _LOG.debug(f"add_all path not_dir: {path}")
             entries.append(add_path(path))
     entries.sort(key=operator.attrgetter('name'))
+    # git update-index
     write_index(entries)
