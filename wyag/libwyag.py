@@ -140,12 +140,15 @@ addp.add_argument('-A',
 
 
 updateindexp = argsubparsers.add_parser("update-index", help="Modifies the index or directory cache.")
-updateindexp.add_argument("--add", action="store_true", help="If a specified file isn’t in the index already then it’s added.")
+updateindexp.add_argument("--add", action="store_true", help=("If a specified file isn’t in the index already then "
+                                                              "it’s added."))
 updateindexp.add_argument("paths", nargs="+", help="Files to act on.")
 
 
 lsfilesp = argsubparsers.add_parser("ls-files", help="Show information about files in the index and the working tree.")
-lsfilesp.add_argument("--stage", "-s", action="store_true", help="Show staged contents' object name, mode bits and stage number in the output.")
+lsfilesp.add_argument("--stage", "-s", action="store_true", help=("Show staged contents' object name, mode bits and "
+                                                                  "stage number in the output."))
+
 
 def subcommand_main() -> None:
     args = argparser.parse_args()

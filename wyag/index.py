@@ -127,6 +127,10 @@ def cleanup_mode(mode: int) -> int:
 def read_index() -> List[GitIndexEntry]:
     """Read git index file and return list of IndexEntry objects.
        https://benhoyt.com/writings/pygit/"""
+    ENTRY_LENGTH = 62
+    HEADER_LENGTH = 12
+    CHECKSUM_LENGTH = 20
+    PADDING = 8
 
     repo = repo_find()
     assert repo is not None, "Repo is None"
@@ -137,30 +141,41 @@ def read_index() -> List[GitIndexEntry]:
         _LOG.debug("File .git/index not found!")
         return []
 
-    digest = hashlib.sha1(data[:-20]).digest()
-    assert digest == data[-20:], 'invalid index checksum'
+    # verify checksum
+    digest = hashlib.sha1(data[:-CHECKSUM_LENGTH]).digest()
+    assert digest == data[-CHECKSUM_LENGTH:], 'invalid index checksum'
 
-    signature, version, num_entries = struct.unpack(HEADER_FORMAT, data[:12])
+    # verify signature and version
+    signature, version, num_entries = struct.unpack(HEADER_FORMAT, data[:HEADER_LENGTH])
     assert signature == b'DIRC', \
         'invalid index signature {}'.format(signature)
     assert version == 2, 'unknown index version {}'.format(version)
 
-    entry_data = data[12:-20]
+    entry_data = data[HEADER_LENGTH:-CHECKSUM_LENGTH]
     entries = []
     i = 0
 
-    while i + 62 < len(entry_data):
-        fields_end = i + 62
-        fields = struct.unpack(ENTRY_FORMAT, entry_data[i:fields_end])
+    while i + ENTRY_LENGTH < len(entry_data):
+        # calculate dimensions
+        fields_end = i + ENTRY_LENGTH
         path_end = entry_data.index(b'\x00', fields_end)
-        path = entry_data[fields_end:path_end]
-        entries.append(GitIndexEntry(*(fields + (path.decode(),))))
+        entry_len = pad_to_multiple(ENTRY_LENGTH + (path_end - fields_end), PADDING)
 
-        entry_len = ((62 + len(path) + 8) // 8) * 8
+        # read data
+        fields = struct.unpack(ENTRY_FORMAT, entry_data[i:fields_end])
+        path = entry_data[fields_end:path_end]
+
+        # next
+        entries.append(GitIndexEntry(*(fields + (path.decode(),))))
         i += entry_len
 
+    # verify number of index entries
     assert len(entries) == num_entries
     return entries
+
+
+def pad_to_multiple(n: int, multiple: int) -> int:
+    return ((n + multiple) // multiple) * multiple
 
 
 def hash_object(path: pathlib.Path, write: bool, fmt: str) -> str:

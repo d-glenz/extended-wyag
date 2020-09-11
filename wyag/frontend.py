@@ -4,7 +4,7 @@ import time
 from typing import Any, Optional, BinaryIO, Set, List
 
 from wyag.base import zlib_read
-from wyag.repository import repo_file, GitRepository, repo_find, repo_path, write_file
+from wyag.repository import repo_file, GitRepository, repo_find, write_file
 from wyag.objects import Sha, object_write, GitObject, GitBlob
 from wyag.commit import GitCommit, commit_read
 from wyag.finder import object_find

@@ -11,7 +11,7 @@ from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_has
 from wyag.tag import tag_create
 from wyag.trees import tree_checkout, tree_read
 from wyag.refs import ref_list, show_ref
-from wyag.index import read_index, add_all, add_path, write_index
+from wyag.index import read_index, add_all
 
 
 _LOG = logging.getLogger('wyag.commands')
