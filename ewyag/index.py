@@ -54,8 +54,8 @@ class GitIndexEntry:
         self.obj = sha1  # The object's hash as a hex string#
 
         self.flags = flags
-        # self.flag_assume_valid = flag_assume_valid
-        # self.flag_extended = flag_extended
+        self.flag_assume_valid = (flags & int("1000000000000000", 2)) >> 15
+        self.flag_extended = (flags & int("0100000000000000", 2)) >> 14
         self.flag_stage = (flags & int("0011000000000000", 2)) >> (4*3)
         # self.flag_name_length = flag_name_length """Length of the name if < 0xFFF (yes, three Fs), -1 otherwise"""
 
@@ -127,7 +127,7 @@ def cleanup_mode(mode: int) -> int:
 def read_index() -> List[GitIndexEntry]:
     """Read git index file and return list of IndexEntry objects.
        https://benhoyt.com/writings/pygit/"""
-    ENTRY_LENGTH = 62
+    FIELDS_LENGTH = 62
     HEADER_LENGTH = 12
     CHECKSUM_LENGTH = 20
     PADDING = 8
@@ -152,14 +152,14 @@ def read_index() -> List[GitIndexEntry]:
     assert version == 2, 'unknown index version {}'.format(version)
 
     entry_data = data[HEADER_LENGTH:-CHECKSUM_LENGTH]
-    entries = []
+    entries: List[GitIndexEntry] = []
     i = 0
 
-    while i + ENTRY_LENGTH < len(entry_data):
+    while len(entries) < num_entries:
         # calculate dimensions
-        fields_end = i + ENTRY_LENGTH
+        fields_end = i + FIELDS_LENGTH
         path_end = entry_data.index(b'\x00', fields_end)
-        entry_len = pad_to_multiple(ENTRY_LENGTH + (path_end - fields_end), PADDING)
+        full_entry_len = pad_to_multiple(FIELDS_LENGTH + (path_end - fields_end), PADDING)
 
         # read data
         fields = struct.unpack(ENTRY_FORMAT, entry_data[i:fields_end])
@@ -167,10 +167,11 @@ def read_index() -> List[GitIndexEntry]:
 
         # next
         entries.append(GitIndexEntry(*(fields + (path.decode(),))))
-        i += entry_len
+        i += full_entry_len
 
-    # verify number of index entries
-    assert len(entries) == num_entries
+    if i + FIELDS_LENGTH < len(entry_data):
+        _LOG.debug("This index file contains extensions")
+
     return entries
 
 
