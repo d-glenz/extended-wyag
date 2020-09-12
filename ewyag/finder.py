@@ -1,11 +1,11 @@
 import re
 from typing import List, Optional
 
-from wyag.base import Sha
-from wyag.commit import commit_read
-from wyag.objects import object_get_type
-from wyag.refs import ref_resolve
-from wyag.repository import GitRepository, repo_dir, repo_file
+from ewyag.base import Sha
+from ewyag.commit import commit_read
+from ewyag.objects import object_get_type
+from ewyag.refs import ref_resolve
+from ewyag.repository import GitRepository, repo_dir, repo_file
 
 
 def object_resolve(repo: GitRepository, name: str) -> List[str]:

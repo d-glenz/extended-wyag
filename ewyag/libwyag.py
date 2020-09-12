@@ -2,12 +2,12 @@ import argparse
 import logging
 import sys
 
-from wyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
+from ewyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                            cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
                            cmd_write_tree, cmd_add, cmd_ls_files, cmd_update_index)
 
 
-_LOG = logging.getLogger('wyag')
+_LOG = logging.getLogger('ewyag')
 
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
@@ -183,4 +183,4 @@ def subcommand_main() -> None:
         target_function = command_dict[args.command]
         target_function(args)
     except KeyError:
-        _LOG.warning(f"wyag: '{args.command}' is not a wyag command. See 'wyag --help'.", file=sys.stderr)
+        _LOG.warning(f"ewyag: '{args.command}' is not a ewyag command. See 'ewyag --help'.", file=sys.stderr)

@@ -3,17 +3,17 @@ import logging
 import time
 from typing import Any, Optional, BinaryIO, Set, List
 
-from wyag.base import zlib_read
-from wyag.repository import repo_file, GitRepository, repo_find, write_file
-from wyag.objects import Sha, object_write, GitObject, GitBlob
-from wyag.commit import GitCommit, commit_read
-from wyag.finder import object_find
-from wyag.tag import GitTag
-from wyag.trees import GitTree, tree_hash
-from wyag.index import GitIndexEntry, read_index
+from ewyag.base import zlib_read
+from ewyag.repository import repo_file, GitRepository, repo_find, write_file
+from ewyag.objects import Sha, object_write, GitObject, GitBlob
+from ewyag.commit import GitCommit, commit_read
+from ewyag.finder import object_find
+from ewyag.tag import GitTag
+from ewyag.trees import GitTree, tree_hash
+from ewyag.index import GitIndexEntry, read_index
 
 
-_LOG = logging.getLogger('wyag.frontend')
+_LOG = logging.getLogger('ewyag.frontend')
 
 
 def generic_object_read(repo: GitRepository, sha: Sha) -> GitObject:

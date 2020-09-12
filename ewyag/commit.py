@@ -1,9 +1,9 @@
 import collections
 from typing import Any, Dict, List, Optional
 
-from wyag.base import Sha, zlib_read, GitObjectTypeError
-from wyag.objects import GitObject
-from wyag.repository import GitRepository, repo_file
+from ewyag.base import Sha, zlib_read, GitObjectTypeError
+from ewyag.objects import GitObject
+from ewyag.repository import GitRepository, repo_file
 
 
 def kvlm_parse(raw: bytearray, start: int = 0, dct: Dict[bytes, List[bytes]] = None) -> Dict[bytes, List[bytes]]:

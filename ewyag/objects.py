@@ -2,8 +2,8 @@ import hashlib
 from typing import Any, Optional, BinaryIO
 import zlib
 
-from wyag.base import GitObjectTypeError, zlib_read, Sha
-from wyag.repository import GitRepository, repo_file
+from ewyag.base import GitObjectTypeError, zlib_read, Sha
+from ewyag.repository import GitRepository, repo_file
 
 
 class GitObject:

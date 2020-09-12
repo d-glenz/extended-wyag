@@ -5,7 +5,7 @@ import pathlib
 from typing import Any, Optional
 
 
-_LOG = logging.getLogger('wyag.repository')
+_LOG = logging.getLogger('ewyag.repository')
 
 
 class GitRepository:

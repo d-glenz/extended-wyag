@@ -8,11 +8,11 @@ import stat
 import struct
 from typing import List
 
-from wyag.repository import repo_path, repo_find, repo_file, GitRepository
-from wyag.objects import blob_hash
+from ewyag.repository import repo_path, repo_find, repo_file, GitRepository
+from ewyag.objects import blob_hash
 
 
-_LOG = logging.getLogger('wyag.index')
+_LOG = logging.getLogger('ewyag.index')
 HEADER_FORMAT = '!4sLL'
 ENTRY_FORMAT = "!LLLLLLLLLL20sH"
 

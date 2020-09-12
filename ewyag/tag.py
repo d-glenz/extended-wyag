@@ -1,11 +1,11 @@
 import collections
 from typing import Optional, Any
 
-from wyag.commit import GitCommit
-from wyag.finder import object_find
-from wyag.repository import GitRepository
-from wyag.objects import object_write
-from wyag.refs import ref_create
+from ewyag.commit import GitCommit
+from ewyag.finder import object_find
+from ewyag.repository import GitRepository
+from ewyag.objects import object_write
+from ewyag.refs import ref_create
 
 
 class GitTag(GitCommit):

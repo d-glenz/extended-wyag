@@ -2,19 +2,19 @@ import argparse
 import logging
 import pathlib
 
-from wyag.base import GitObjectTypeError
-from wyag.commit import commit_read
-from wyag.finder import object_find
-from wyag.repository import GitRepository, repo_create, repo_find, repo_path
-from wyag.objects import Sha, object_get_type
-from wyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read, commit
-from wyag.tag import tag_create
-from wyag.trees import tree_checkout, tree_read
-from wyag.refs import ref_list, show_ref
-from wyag.index import read_index, add_all
+from ewyag.base import GitObjectTypeError
+from ewyag.commit import commit_read
+from ewyag.finder import object_find
+from ewyag.repository import GitRepository, repo_create, repo_find, repo_path
+from ewyag.objects import Sha, object_get_type
+from ewyag.frontend import tree_write, log_graphviz, file_cat, generic_object_hash, generic_object_read, commit
+from ewyag.tag import tag_create
+from ewyag.trees import tree_checkout, tree_read
+from ewyag.refs import ref_list, show_ref
+from ewyag.index import read_index, add_all
 
 
-_LOG = logging.getLogger('wyag.commands')
+_LOG = logging.getLogger('ewyag.commands')
 
 
 def cmd_init(args: argparse.Namespace) -> None:
@@ -45,7 +45,7 @@ def cmd_log(args: argparse.Namespace) -> None:
     repo = repo_find()
     assert repo is not None, "Git repository not found"
 
-    _LOG.info("digraph wyaglog{")
+    _LOG.info("digraph ewyaglog{")
     git_object_sha = object_find(repo, args.commit)
     assert git_object_sha is not None
     log_graphviz(repo, git_object_sha, set())

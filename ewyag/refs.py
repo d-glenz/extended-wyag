@@ -3,10 +3,10 @@ import logging
 import pathlib
 from typing import Any, Dict
 
-from wyag.repository import GitRepository, repo_file, repo_dir
+from ewyag.repository import GitRepository, repo_file, repo_dir
 
 
-_LOG = logging.getLogger('wyag.refs')
+_LOG = logging.getLogger('ewyag.refs')
 
 
 def show_ref(repo: GitRepository, refs: Dict[str, str], with_hash: bool = True, prefix: str = "") -> None:

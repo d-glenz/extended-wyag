@@ -1,17 +1,14 @@
 import setuptools
 
 setuptools.setup(
-    name='wyag',
+    name='ewyag',
     version='1.0',
-    author='Thibault Polge',
-    author_email='thibault@thb.lt',
-    description='Write Yourself a Git!',
+    author='Dominik Glenz',
+    author_email='dominik.glenz@gmail.com',
+    description='Write Yourself a Git! - extended',
     packages=setuptools.find_packages(),
-    install_requires=[
-        'argcomplete'
-    ],
     entry_points={
-        'console_scripts': ['wyag=wyag.main:main'],
+        'console_scripts': ['ewyag=ewyag.main:main'],
     },
     classifiers=[
         'Programming Language :: Python :: 3',

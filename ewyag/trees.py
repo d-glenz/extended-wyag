@@ -1,9 +1,9 @@
 import pathlib
 from typing import Tuple, List, Optional, BinaryIO, Any
 
-from wyag.base import GitObjectTypeError, zlib_read
-from wyag.objects import GitObject, object_get_type, Sha, blob_read, object_write
-from wyag.repository import GitRepository, repo_find, repo_file
+from ewyag.base import GitObjectTypeError, zlib_read
+from ewyag.objects import GitObject, object_get_type, Sha, blob_read, object_write
+from ewyag.repository import GitRepository, repo_find, repo_file
 
 
 class GitTreeLeaf:
