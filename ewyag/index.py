@@ -31,6 +31,16 @@ mode_types = {
 
 S_IFGITLINK = 0o160000
 
+extension_signatures = {
+    b"TREE": "Cached tree",
+    b"REUC": "Resolve undo",
+    b"link": "Split index",
+    b"UNTR": "Untracked cache",
+    b"FSMN": "File System Monitor Cache",
+    b"EOIE": "End of Index Entry",
+    b"IEOT": "Index Entry Offset Table",
+}
+
 
 class GitIndexEntry:
     def __init__(self, ctime_s: int, ctime_n: int, mtime_s: int, mtime_n: int, dev: int, ino: int, mode: int,
@@ -170,7 +180,8 @@ def read_index() -> List[GitIndexEntry]:
         i += full_entry_len
 
     if i + FIELDS_LENGTH < len(entry_data):
-        _LOG.debug("This index file contains extensions")
+        _LOG.debug((f"This index file contains extensions (signature: "
+                    f"{entry_data[i:i+4].decode()} -> {extension_signatures[entry_data[i:i+4]]})"))
 
     return entries
 

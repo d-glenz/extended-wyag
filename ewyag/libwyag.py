@@ -11,7 +11,7 @@ _LOG = logging.getLogger('ewyag')
 
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
-argparser.add_argument('--debug', action='store_true')
+argparser.add_argument('--verbose', '-v', action='store_true')
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
 argsubparsers.required = True
 
@@ -154,7 +154,7 @@ def subcommand_main() -> None:
     args = argparser.parse_args()
 
     _LOG.addHandler(logging.StreamHandler(sys.stdout))
-    if args.debug:
+    if args.verbose:
         _LOG.setLevel(logging.DEBUG)
     else:
         _LOG.setLevel(logging.INFO)
