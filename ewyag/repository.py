@@ -2,7 +2,7 @@ import configparser
 import logging
 import pathlib
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 
 _LOG = logging.getLogger('ewyag.repository')
@@ -32,6 +32,19 @@ class GitRepository:
             vers = int(self.conf.get("core", "repositoryformatversion"))
             if vers != 0:
                 raise ValueError(f"Unsupported repositoryformatversion {vers}")
+
+    def add_to_config(self, section: str, kv_entries: Dict[str, str]) -> None:
+        if not self.conf.has_section(section):
+            self.conf.add_section(section)
+        for key, value in kv_entries.items():
+            self.conf.set(section, key, value)
+
+        self.write_config()
+
+    def write_config(self):
+        cf = repo_file(self, "config")
+        with open(cf, 'w+') as config_file:
+            self.conf.write(config_file)
 
 
 def repo_path(repo: GitRepository, *path: str) -> pathlib.Path:

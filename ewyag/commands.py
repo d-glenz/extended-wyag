@@ -156,3 +156,55 @@ def cmd_add(args: argparse.Namespace) -> None:
 def cmd_update_index(args: argparse.Namespace) -> None:
     if args.add:
         cmd_add(args)
+
+
+def cmd_remote(args: argparse.Namespace) -> None:
+    repo = repo_find()
+    remotes = {}
+    for section in repo.conf.sections():
+        if not section.startswith('remote '):
+            continue
+        remote_name = section.split('"')[1]
+        remotes[remote_name] = {
+            "fetch": repo.conf.get(section, "url"),
+            "pull": repo.conf.get(section, "url")
+        }
+
+    if args.subcommand == "add":
+        section = f'remote "{args.name}"'
+        repo.add_to_config(section,
+                           {"url": args.url,
+                            "fetch": f"+refs/heads/*:refs/remotes/{args.name}/*"})
+    elif args.subcommand == "remove":
+        section = f'remote "{args.name}"'
+        repo.conf.remove_section(f'remote "{args.name}"')
+        repo.write_config()
+    elif args.subcommand == "get-url":
+        print(remotes[args.name]['fetch'])
+    elif args.subcommand == "prune":
+        pass
+    elif args.subcommand == "rename":
+        old = f'remote "{args.old}"'
+        new = f'remote "{args.new}"'
+        repo.conf.add_section(new)
+        for option_name in repo.conf.options(old):
+            value = repo.conf.get(old, option_name)
+            repo.conf.remove_option(old, option_name)
+            repo.conf.set(new, option_name, value)
+        repo.conf.remove_section(old)
+        repo.write_config()
+    elif args.subcommand == "set-branches":
+        pass
+    elif args.subcommand == "set-head":
+        pass
+    elif args.subcommand == "set-url":
+        pass
+    elif args.subcommand is None:
+        for remote, value in remotes.items():
+            if args.verbose:
+                print(f"{remote}\t{value['fetch']} (fetch)")
+                print(f"{remote}\t{value['pull']} (push)")
+            else:
+                print(f"remote")
+    else:
+        raise ValueError(f"Unknown subcommand to remote {args.subcommand}")

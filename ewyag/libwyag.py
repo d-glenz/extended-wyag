@@ -4,7 +4,8 @@ import sys
 
 from ewyag.commands import (cmd_init, cmd_cat_file, cmd_hash_object, cmd_log, cmd_ls_tree,
                             cmd_checkout, cmd_show_ref, cmd_tag, cmd_rev_parse, cmd_commit,
-                            cmd_write_tree, cmd_add, cmd_ls_files, cmd_update_index)
+                            cmd_write_tree, cmd_add, cmd_ls_files, cmd_update_index,
+                            cmd_remote)
 
 
 _LOG = logging.getLogger('ewyag')
@@ -12,6 +13,7 @@ _LOG = logging.getLogger('ewyag')
 
 argparser = argparse.ArgumentParser(description="The stupid content tracker")
 argparser.add_argument('--verbose', '-v', action='store_true')
+
 argsubparsers = argparser.add_subparsers(title='Commands', dest='command')
 argsubparsers.required = True
 
@@ -149,6 +151,36 @@ lsfilesp = argsubparsers.add_parser("ls-files", help="Show information about fil
 lsfilesp.add_argument("--stage", "-s", action="store_true", help=("Show staged contents' object name, mode bits and "
                                                                   "stage number in the output."))
 
+remotep = argsubparsers.add_parser('remote', help="Manage set of tracked repositories.")
+remotep.add_argument('-v', '--verbose', action="store_true")
+remotesubparsers = remotep.add_subparsers(title='Sub-Commands', dest='subcommand')
+
+remoteaddp = remotesubparsers.add_parser("add")
+remoteaddp.add_argument("name")
+remoteaddp.add_argument("url")
+remoteaddp.add_argument("--fetch", "-f", action="store_true")
+remoteaddp.add_argument("--tags")
+remoteaddp.add_argument("-t","--track")
+remoteaddp.add_argument("-m","--master")
+remoteaddp.add_argument("--mirror", choices=["push", "fetch"])
+
+remotegeturlp = remotesubparsers.add_parser("get-url")
+remotegeturlp.add_argument('--push')
+remotegeturlp.add_argument('--all')
+remotegeturlp.add_argument('name')
+
+remoteremovep = remotesubparsers.add_parser("remove")
+remoteremovep.add_argument("name")
+
+remoterenamep = remotesubparsers.add_parser("rename")
+remoterenamep.add_argument("old")
+remoterenamep.add_argument("new")
+
+remoteprunep = remotesubparsers.add_parser("prune")
+remotesetbranchesp = remotesubparsers.add_parser("set-branches")
+remotesetheadp = remotesubparsers.add_parser("set-head")
+remoteseturlp = remotesubparsers.add_parser("set-url")
+
 
 def subcommand_main() -> None:
     args = argparser.parse_args()
@@ -172,6 +204,7 @@ def subcommand_main() -> None:
         # "merge": cmd_merge,
         # "rebase": cmd_rebase,
         "rev-parse": cmd_rev_parse,
+        "remote": cmd_remote,
         # "rm": cmd_rm,
         "show-ref": cmd_show_ref,
         "tag": cmd_tag,
